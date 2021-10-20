@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="plugins/fab/livemousetracker/machinelearning/MachineLearningSetBuilderOldDictio.java|plugins/fab/livemousetracker/openfield/OpenFieldSingleRT.java|plugins/fab/livemousetracker/splitter/DetectionSplitter1.java|plugins/fab/livemousetracker/splitter/DetectionSplitter2.java|plugins/fab/livemousetracker/splitter/DetectionSplitter3.java|plugins/fab/aaa/voc/family/FamilyMaker.java" kind="src" path="src">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="LiveMouseTrackerSuite/lib/win64"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/KinectDriver"/>
+	<classpathentry kind="lib" path="WebcamCaptureLibraryPlugin.jar"/>
+	<classpathentry kind="lib" path="BridJLibraryPlugin.jar"/>
+	<classpathentry kind="lib" path="engine.io-client-1.0.0.jar"/>
+	<classpathentry kind="lib" path="json-20090211.jar"/>
+	<classpathentry kind="lib" path="okhttp-3.8.1.jar"/>
+	<classpathentry kind="lib" path="okio-1.13.0.jar"/>
+	<classpathentry kind="lib" path="socket.io-client-1.0.0.jar"/>
+	<classpathentry kind="lib" path="weka.jar"/>
+	<classpathentry kind="lib" path="SimpleDynamixel.jar"/>
+	<classpathentry kind="lib" path="jSerialComm-2.3.0.jar"/>
+	<classpathentry kind="lib" path="jtransforms.jar"/>
+	<classpathentry kind="lib" path="flanagan.jar"/>
+	<classpathentry kind="lib" path="vecmath.jar"/>
+	<classpathentry kind="var" path="ICY_HOME/icy.jar"/>
+	<classpathentry kind="var" path="ICY_HOME/lib/xuggler.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
