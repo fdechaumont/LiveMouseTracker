@@ -38,7 +38,7 @@ public class LiveAnalysisClientTest extends PluginActionable implements PluginTh
 
 		System.out.println("Live Analysis Client launched.");
 		try {
-			Socket clientSocket = new Socket("127.0.0.1", 7101 );
+			Socket clientSocket = new Socket("127.0.0.1", 55044 );
 
 			DataRequest request = new DataRequest();
 			request.setDataType( DataRequestType.FULL_POSITION_SET );

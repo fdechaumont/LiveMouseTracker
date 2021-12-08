@@ -37,7 +37,7 @@ public class TrackIdentityGlobalSolver {
 	public TrackIdentityGlobalSolver(
 			ArrayList<TrackIdentityScorer> trackIdentityProblemList, Identifier identifier ) {
 
-		System.out.println("Track identity problem size: " + trackIdentityProblemList.size() );
+		//System.out.println("Track identity problem size: " + trackIdentityProblemList.size() );
 
 		try
 		{
@@ -81,7 +81,7 @@ public class TrackIdentityGlobalSolver {
 			}
 
 			// Check best score
-			System.out.println("Score list:");
+			//System.out.println("Score list:");
 			double bestScore = 0;
 			Chain bestChain = null;
 			double totalScore = 0;
@@ -91,7 +91,7 @@ public class TrackIdentityGlobalSolver {
 
 				if( LiveMouseTracker.LOG_CHAIN )
 				{
-					System.out.println( chain );
+					//System.out.println( chain );
 				}
 				if ( chain.getScore() > bestScore )
 				{
@@ -102,27 +102,27 @@ public class TrackIdentityGlobalSolver {
 			}
 			if ( bestChain == null )
 			{
-				System.out.println("No best chain found. ChainList size: " + chainList.size() );
+				//System.out.println("No best chain found. ChainList size: " + chainList.size() );
 
 				return;
 			}
 
-			System.out.println("Best chain: " + bestChain );
+			//System.out.println("Best chain: " + bestChain );
 			double proportion = 100d * bestChain.getScore() / totalScore;
-			System.out.println("Best chain score : " + bestChain.getScore() + " over a total of " + totalScore + " Prop= " + proportion + "%");
+			//System.out.println("Best chain score : " + bestChain.getScore() + " over a total of " + totalScore + " Prop= " + proportion + "%");
 
 //			System.out.println("Tracking association decision would be: ");
 			for ( TrackIdentityProblemToAnimal tipToAnimal : bestChain.tipToAnimalList )
 			{
 				if( LiveMouseTracker.LOG_CHAIN ){
-					System.out.println( tipToAnimal.animal.getName() );
+					//System.out.println( tipToAnimal.animal.getName() );
 				}
 				TrackSegment ts = tipToAnimal.tip.getTrack();
 				Point2D massCenter = ts.getDetection( ts.getLastTimePoint() ).getMassCenter().toPoint2D();
 				String txt = tipToAnimal.animal.getName() + ": " + massCenter;
 
 				if ( LiveMouseTracker.LOG_CHAIN ){
-					System.out.println( txt );
+					//System.out.println( txt );
 				}
 
 //				ROI2DRectangle roi = new ROI2DRectangle( massCenter );
@@ -139,7 +139,7 @@ public class TrackIdentityGlobalSolver {
 
 			if ( proportion > LiveMouseTracker.LEARNING_ID_ASSOCIATION_PROPORTION_THRESHOLD )
 			{
-				System.out.println("Taking association decision.");
+				//System.out.println("Taking association decision.");
 				LiveMouseTracker.number_of_auto_correction++;
 				for ( TrackIdentityProblemToAnimal tipToAnimal : bestChain.tipToAnimalList )
 				{
@@ -150,7 +150,7 @@ public class TrackIdentityGlobalSolver {
 						LiveMouseTracker.addEventLogToDataBase( new EventLog("MACHINE LEARNING ASSOCIATION", tipToAnimal.animal ));
 					}else
 					{
-						System.out.println("set track identity disabled.");
+						//System.out.println("set track identity disabled.");
 					}
 //					LiveMouseTracker.setTrackIdentity( tipToAnimal.tip.getTrack() , tipToAnimal.animal );
 				}

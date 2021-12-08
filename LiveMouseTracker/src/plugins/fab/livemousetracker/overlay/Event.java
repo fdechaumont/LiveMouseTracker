@@ -173,7 +173,7 @@ public class Event {
 
 	public void setText(String text) {
 		this.text = text;
-		System.out.println( "[EVENT] " + text );
+		//System.out.println( "[EVENT] " + text );
 	}
 
 }

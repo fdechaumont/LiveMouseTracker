@@ -63,6 +63,7 @@ import icy.system.profile.Chronometer;
 import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
+import icy.type.point.Point3D;
 import loci.formats.FormatException;
 import plugins.fab.kinectdriver.KinectData;
 import plugins.fab.kinectdriver.KinectEvent;
@@ -125,10 +126,11 @@ import plugins.kernel.roi.roi2d.ROI2DRectangle;
 import weka.classifiers.Classifier;
 import weka.core.Instances;
 
+
 public class LiveMouseTracker extends PluginActionable
 implements KinectListener, ActionListener, IcyFrameListener {
 
-	String version = "2.0.0 Alpha";
+	String version = "2022 PREVIEW";
 	/** Warning: This depth sequence is the one from the kinect, It's not a Z-corrected version. Use LiveMouseTracker.depthImage instead */
 	public static final boolean DISPLAY_DEPTH_SEQUENCE = false;
 	public static final boolean DISPLAY_DIF_INFRA_SEQUENCE = false;
@@ -197,7 +199,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	/*
 	 * LOGS
 	 */
-	public static final boolean LOG_SPLIT = true;
+	public static final boolean LOG_SPLIT = false;
 	public static final boolean LOG_IDENTIFIER = false;
 	public static final int NUMBER_OF_FRAME_BEFORE_SEND_DATA_TO_STREAM = 5 * 30 * 60; // 5 minutes
 	static ArrayList<EventLog> event2DataBaseLog = new ArrayList<EventLog>();
@@ -282,7 +284,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static final boolean USE_MACHINELEARNING_CACHE = true;
 	private static final boolean MANAGE_FRAME_DROP = false;
 	public static final boolean HEAD_TAIL_MACHINE_LEARNING = true;
-	public static boolean USE_MULTIPLE_IDENTITY_RECOVERY_WITH_MACHINE_LEARNING = true;
+	public static boolean USE_MULTIPLE_IDENTITY_RECOVERY_WITH_MACHINE_LEARNING = true; // false for diseapearring animals
 
 	private static boolean SAVE_BACKGROUND = false;
 	public int saveBackgroundEachNumberOfFrame = 30*60;
@@ -418,8 +420,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public enum CAGE_MODE { CLASSIC_16, RATS_25 }
 
 	//boolean rat_mode = false;
-	//public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
-	public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
+	public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
+	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 
 	public enum CRITICAL_LOOP_STEP
 	{
@@ -857,7 +859,14 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 					if (!lutInfraDone && (infraOut.getFirstViewer() != null))
 					{
-						infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
+						if ( cageMode == CAGE_MODE.RATS_25 )
+						{
+							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 12750 );
+						}else
+						{
+							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
+						}
+						//infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
 						lutInfraDone = true;
 					}
 
@@ -868,6 +877,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 					if ( cageMode == CAGE_MODE.RATS_25 )
 					{
+						/*
 						counterSkip15fps++;
 						if ( counterSkip15fps %2 == 0 ) // 15FPS MODE in RAT MODE
 						{
@@ -876,6 +886,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 						{
 							processFrame = false;
 						}
+						*/
 					}
 
 					if ( processFrame )
@@ -1215,7 +1226,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	CRITICAL_LOOP_STEP criticalStep;
 
-	static public PerformanceMonitor performanceMonitor;
+	//static public PerformanceMonitor performanceMonitor;
 
 	private void processCurrentT() {
 
@@ -1223,7 +1234,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		nbImageProcessed++;
 
 
-		performanceMonitor = new PerformanceMonitor("Main critical loop #"+t);
+		//performanceMonitor = new PerformanceMonitor("Main critical loop #"+t);
 
 
 		criticalStep = CRITICAL_LOOP_STEP.s01_Start;
@@ -1233,7 +1244,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		//Chronometer chrono = new Chronometer( "CriticalSteps -------- frame:  " + t  + " --- " );
 
 
-		System.out.println("Frame:"+t);
+		//System.out.println("Frame:"+t);
 
 		if ( TTL_SYNCHRO_ENABLED )
 		{
@@ -1243,7 +1254,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			}
 			ttlSynchronizer.sendTTL( TTLSynchronizer.TTL_SIGNAL.SYNCHRO_FRAME );
 		}
-		performanceMonitor.stepDone("TTL");
+		//performanceMonitor.stepDone("TTL");
 
 		FrameInfo frameInfo = new FrameInfo(
 				t , new Date( Calendar.getInstance().getTime().getTime() ), pauseAllProcess
@@ -1254,7 +1265,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		synchronized ( frameInfoList ) {
 			frameInfoList.add( frameInfo );
 		}
-		performanceMonitor.stepDone("Frame info");
+		//performanceMonitor.stepDone("Frame info");
 
 		//if ( RFID_ENABLED )
 		{
@@ -1275,11 +1286,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		synchronized ( absoluteHintArrayList ) {
 			absoluteHintArrayList.clear();
 		}
-		performanceMonitor.stepDone("Clear debug overlays and hints");
+		//performanceMonitor.stepDone("Clear debug overlays and hints");
 
 		cleanTemporaryROIs();
 
-		performanceMonitor.stepDone("Clean tmp ROIs");
+		//performanceMonitor.stepDone("Clean tmp ROIs");
 
 		criticalStep = CRITICAL_LOOP_STEP.s02_Correct_Z_Map;
 
@@ -1288,13 +1299,13 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		//compensateZIntensityError( depthImage , infraImage );
 		compensateZIntensityError2( depthImage , infraImage );
 
-		performanceMonitor.stepDone("Correct Z map");
+		//performanceMonitor.stepDone("Correct Z map");
 
 		if ( pauseAllProcess ) return;
 
 		IcyBufferedImage depthDifInTimeImage = difDepthInTimeSequence.getImage( 0 , 0 );
 		IcyBufferedImage infraDifInTimeImage = difInfraInTimeSequence.getImage( 0 , 0 );
-		performanceMonitor.stepDone("Get images");
+		//performanceMonitor.stepDone("Get images");
 
 		// Computes the map Depth_t - Depth_(t-1)
 		if ( COMPUTE_DEPTH_DIF_MAP )
@@ -1314,11 +1325,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		//computeDepthDifCumulated( );
 
 		criticalStep = CRITICAL_LOOP_STEP.s03_Background_Image;
-		System.out.println( "entering critical : "+criticalStep.name() );
+		//System.out.println( "entering critical : "+criticalStep.name() );
 
 		// Integrate the new depth Image to build the background map.
 		backgroundHeightMapBuilder.integrateNewDepthMapImage( depthImage );
-		performanceMonitor.stepDone("Background height map");
+		//performanceMonitor.stepDone("Background height map");
 
 		if ( !backgroundHeightMapBuilder.isReady() ) return;
 
@@ -1336,12 +1347,12 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		//chrono.displayMs();
 		criticalStep = CRITICAL_LOOP_STEP.s04_Detect_Mouse;
-		System.out.println( "entering critical : "+criticalStep.name() );
+		//System.out.println( "entering critical : "+criticalStep.name() );
 
 		// detect mice
 		ArrayList<MouseDetection> rawMouseDetectionList =
 				mouseDetector.detectMice( depthImage , infraImage ,t , tailCandidateArrayList );
-		performanceMonitor.stepDone("Detection done");
+		//performanceMonitor.stepDone("Detection done");
 
 		// try to break too big detection using tracking
 		//chrono.displayMs();
@@ -1368,16 +1379,16 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			}else
 			{ 	// perform split
 				//Chronometer chronoSplitDetection = new Chronometer("detection splitter *** ");
-				performanceMonitor.stepDone("Detection done");
+				//performanceMonitor.stepDone("Detection done");
 				rawMouseDetectionList.addAll(
 						DetectionSplitter3Optimized.splitDetectionWithSeed( tooBigDetection ,
 						null ) );
-				performanceMonitor.stepDone("Splitter done");
+				//performanceMonitor.stepDone("Splitter done");
 				//	chronoSplitDetection.displayMs();
 			}
 
 		}
-		System.out.println("Nb raw mouse detection: "+rawMouseDetectionList.size() );
+		//System.out.println("Nb raw mouse detection: "+rawMouseDetectionList.size() );
 		{ // Intentionally make the system blind the system for test purposes
 			if ( trackPoolOverlay.getLooseTrackCounter() > 0 )
 			{
@@ -1405,18 +1416,50 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				break;
 			}
 		}
-		performanceMonitor.stepDone("Check reset background");
+		
+		// reject reflexion detection
+		//cage
+		if ( cageROIMask != null && cageFloorMask != null )
+		{
+			// Roi fully in cage-cagefloor is rejected
+			
+			for ( MouseDetection rawDetection : new ArrayList<MouseDetection>(rawMouseDetectionList) )
+			{
+				
+				//if ( ! cageFloorMask.contains( rawDetection.getBooleanMask() ) )			
+				
+				Point3D massCenter = rawDetection.getMassCenter();
+				//boolean detectionInCageFloor = cageFloorMask.contains( (int) massCenter.getX() , (int) massCenter.getY() );
+				boolean detectionInCageFloor = cageFloorMask.intersects( rawDetection.getBooleanMask() );
+						
+				if ( ! detectionInCageFloor )
+				{
+					rawMouseDetectionList.remove( rawDetection );
+					rawDetection.getROI2DArea().setColor( Color.pink );
+					correctBackGround( depthImage, rawDetection );
+					//System.out.println( "time : " + t + " - Reflexion removed");
+					/*
+					Event event = new Event( "Reflexion removed", Color.PINK,							
+							rawDetection.getMassCenter().toPoint2D() );
+					LiveMouseTracker.addEvent( event );
+					*/
+				}
+			}			
+		}
+		
+		
+		//performanceMonitor.stepDone("Check reset background");
 
 
 		filterDetection( rawMouseDetectionList , t , depthImage );
-		performanceMonitor.stepDone("Filter detection");
+		//performanceMonitor.stepDone("Filter detection");
 		//chrono.displayMs();
 		//criticalStep = CRITICAL_LOOP_STEP.s07_Filter_Detection;
 		//System.out.println( "entering critical : "+criticalStep.name() );
 
 		postFilterNumberOfAnimals( rawMouseDetectionList );
 		firePostFilterDetection( rawMouseDetectionList , t, depthImage );
-		performanceMonitor.stepDone("post filter detection");
+		//performanceMonitor.stepDone("post filter detection");
 
 //		for ( MouseDetection md : rawMouseDetectionList )
 //		{
@@ -1454,10 +1497,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 //				}
 //			}
 //	}
-		System.out.println("Nb raw mouse detection filtered: "+rawMouseDetectionList.size() );
+		//System.out.println("Nb raw mouse detection filtered: "+rawMouseDetectionList.size() );
 		//chrono.displayMs();
 		//criticalStep = CRITICAL_LOOP_STEP.s08_Thread_Tasking_Launch;
-		System.out.println( "entering critical : "+criticalStep.name() );
+		//System.out.println( "entering critical : "+criticalStep.name() );
 
 		if ( t > INIT_LEARNING_TIME_POINT ) // > and not == so that it can't be missed anymore !
 		{
@@ -1576,20 +1619,20 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			});
 		}
 
-		performanceMonitor.stepDone("all post-thread started");
+		//performanceMonitor.stepDone("all post-thread started");
 
 		//
 		// Perform tracking
 		//
 		//chrono.displayMs();
 		criticalStep = CRITICAL_LOOP_STEP.s09_Tracking;
-		System.out.println( "entering critical : "+criticalStep.name() );
+		//System.out.println( "entering critical : "+criticalStep.name() );
 
 		if ( TRACKING_ENABLED )
 		{
 			track( t,  rawMouseDetectionList );
 		}
-		performanceMonitor.stepDone("Tracking");
+		//performanceMonitor.stepDone("Tracking");
 
 		//chrono.displayMs();
 		//criticalStep = CRITICAL_LOOP_STEP.s10_MultitrackIdentity;
@@ -1608,7 +1651,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				multiTrackIdentity();
 			}
 		}
-		performanceMonitor.stepDone("Multi track identity");
+		//performanceMonitor.stepDone("Multi track identity");
 
 
 
@@ -1620,7 +1663,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			rfidManager.activateAntennas();
 			RFIDSolver2.rfidManagment(rfidManager);
 		}
-		performanceMonitor.stepDone("RFID Solver");
+		//performanceMonitor.stepDone("RFID Solver");
 
 		if( DISPLAY_LOG_IN_CONSOLE )
 		{
@@ -1633,11 +1676,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		// better to do it here to avoid multiple call
 		//backgroundHeightMapBuilder.backgroundImage.dataChanged();
-		performanceMonitor.stepDone("Background dataChanged");
+		//performanceMonitor.stepDone("Background dataChanged");
 
 		//chrono.displayMs();
 		criticalStep = CRITICAL_LOOP_STEP.s12_Record_to_MPEG;
-		System.out.println( "entering critical : "+criticalStep.name() );
+		//System.out.println( "entering critical : "+criticalStep.name() );
 
 		if ( SAVE_MEDALLON )
 		{
@@ -1674,7 +1717,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		}
 
 		mpegTimeLapseRecorder.recordMP4TimeLapse();
-		performanceMonitor.stepDone("Record MPEG");
+		//performanceMonitor.stepDone("Record MPEG");
 		/* THERMAL
 		if ( thermalSequence != null )
 		{
@@ -1729,7 +1772,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		}
 
-		performanceMonitor.stepDone("Save background");
+		//performanceMonitor.stepDone("Save background");
 
 		// revert depthImage (for display and technical demo purposes)
 		if ( DISPLAY_REVERT_3D_DEPTH_AND_BACKGROUND )
@@ -1768,7 +1811,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				}
 				backgroundSequenceRevert.dataChanged();
 			}
-			performanceMonitor.stepDone("Display 3D");
+			//performanceMonitor.stepDone("Display 3D");
 		}
 
 		// clean past data heavy detection.
@@ -1777,12 +1820,12 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		{
 			mouseDetection.cleanHeavyData();
 		}
-		performanceMonitor.stepDone("Clean heavy data");
+		//performanceMonitor.stepDone("Clean heavy data");
 
 		if ( TTL_SYNCHRO_ENABLED )
 		{
 			manageTTLSynchroEvents();
-			performanceMonitor.stepDone("TTL Synchro");
+			//performanceMonitor.stepDone("TTL Synchro");
 		}
 
 		/*
@@ -1792,8 +1835,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		}
 		chrono.displayMs();
 		*/
-		performanceMonitor.finish();
-		performanceMonitor.printReport();
+		//performanceMonitor.finish();
+		//performanceMonitor.printReport();
 
 	}
 
@@ -2061,7 +2104,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 						minSurface = s;
 					}
 				}
-				System.out.println("REMOVING DETECTION BECAUSE OF MAX NUMBER OF ANIMALS");
+				//System.out.println("REMOVING DETECTION BECAUSE OF MAX NUMBER OF ANIMALS");
 				smallestDetection.getROI2DArea().setColor( Color.cyan );
 				rawMouseDetectionList.remove( smallestDetection );
 				correctBackGround( depthImage, smallestDetection );
@@ -2084,8 +2127,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			return;
 		}
 
-		System.out.println("multi track id: Number of anonymous tracks: " + trackContainer.anonymousTrackSegmentPool.trackSegmentArrayList.size() );
-		if ( trackContainer.anonymousTrackSegmentPool.trackSegmentArrayList.isEmpty() ) return;
+		//System.out.println("multi track id: Number of anonymous tracks: " + trackContainer.anonymousTrackSegmentPool.trackSegmentArrayList.size() );
+		if ( trackContainer.anonymousTrackSegmentPool.trackSegmentArrayList.isEmpty() )
+		{
+			return;
+		}
 		multiIdentityAgentManager.process( trackContainer.anonymousTrackSegmentPool );
 	}
 
@@ -2698,8 +2744,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	}
 
 	private void refreshSubPartClassifier() {
-		System.out.println("*** TEST - COMPUTE SUB PARTS ***");
-		Chronometer	computeSubPartChrono = new Chronometer("COMPUTE SUB PARTS");
+		//System.out.println("*** TEST - COMPUTE SUB PARTS ***");
+		//Chronometer	computeSubPartChrono = new Chronometer("COMPUTE SUB PARTS");
 //		Message message = LiveMouseTracker.perfLogger.addMessage( new Message( "Refresh sub part classifier." ));
 		for ( Animal animal : getMainAnimalPool().animalList )
 		{
@@ -2721,7 +2767,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			//ml_spb.evaluate();
 		}
 //		LiveMouseTracker.perfLogger.removeMessage( message );
-		computeSubPartChrono.displayMs();
+		//computeSubPartChrono.displayMs();
 		//System.out.println("*** TEST - COMPUTE SUB PARTS DONE ***");
 	}
 
@@ -3549,7 +3595,30 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			if ( cageMode == CAGE_MODE.RATS_25 )
 			{
 				//USE_MULTIPLE_IDENTITY_RECOVERY_WITH_MACHINE_LEARNING = false;
-
+				double minX = 147 - 15 -10 +2.5;
+				double minY = 95 - 15 -10 +2.5;
+				
+				double maxX = 147+57.5*5.0 + 15 + 10 -2.5;
+				double maxY = 95+ 57.5*5.0 + 15 + 10 -2.5;
+				
+				double nbRow=5;
+				int comNumber = 50;
+				double stepX = (maxX-minX)/nbRow;
+				double stepY = (maxY-minY)/nbRow;
+				
+				
+				
+				for ( int y=0; y<nbRow; y++ )
+				{
+					for ( int x=0; x<nbRow; x++ )
+					{
+						rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( minX+ x*stepX, minY+ y*stepY ) , 25 , "COM"+comNumber ) ); // 23
+						comNumber++;
+					}					
+				}
+				
+				
+				/*
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 147+57.5*0.0,   95 ) , 30 , "COM50" ) ); // 23
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 147+57.5*1.0,   95 ) , 30 , "COM51" ) ); // 25
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 147+57.5*2.0,   95 ) , 30 , "COM52" ) ); // 13
@@ -3579,6 +3648,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 147+57.5*2.0,  95+ 57.5*4.0) , 30 , "COM72" ) ); // 17
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 147+57.5*3.0,  95+ 57.5*4.0) , 30 , "COM73" ) ); // 11
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 147+57.5*4.0,  95+ 57.5*4.0) , 30 , "COM74" ) ); // 11
+				*/
 			}
 
 

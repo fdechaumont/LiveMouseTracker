@@ -34,7 +34,7 @@ public class CachedAnimalMachineLearningManager {
 		{
 			txt+= animal.getName()+ " ";
 		}
-		System.out.println("[CACHE ML] REQUEST for " + txt);
+		//System.out.println("[CACHE ML] REQUEST for " + txt);
 
 		// Remove old caches.
 
@@ -45,7 +45,7 @@ public class CachedAnimalMachineLearningManager {
 				// remove cache
 				if ( cachedClassifier.creationFrame < LiveMouseTracker.getT() - 30*60*2 ) // 2 minutes
 				{
-					System.out.println("[CACHE ML] removing cached classifier (too old):" + cachedClassifier );
+					//System.out.println("[CACHE ML] removing cached classifier (too old):" + cachedClassifier );
 					cachedList.remove( cachedClassifier );
 				}
 			}
@@ -61,7 +61,7 @@ public class CachedAnimalMachineLearningManager {
 
 		if ( buildIfNotCached )
 		{
-			System.out.println("[CACHE ML] BUILD AS NOT CACHED");
+			//System.out.println("[CACHE ML] BUILD AS NOT CACHED");
 			return createCache( candidateAnimalList, false );
 		}
 
@@ -70,11 +70,11 @@ public class CachedAnimalMachineLearningManager {
 
 	public static CachedAnimalMachineLearningClassifier createCache( ArrayList<Animal> animalList, boolean evaluate )
 	{
-		System.out.println("[CACHE ML] CREATE CACHE");
+		//System.out.println("[CACHE ML] CREATE CACHE");
 		CachedAnimalMachineLearningClassifier cmlc = new CachedAnimalMachineLearningClassifier( animalList , evaluate );
 		CachedAnimalMachineLearningClassifier previousCache = getCache( animalList , false );
 
-		System.out.println("[CACHE ML] Cache size: " + cachedList.size() );
+		//System.out.println("[CACHE ML] Cache size: " + cachedList.size() );
 //azerty
 //piste : enlever les caches
 

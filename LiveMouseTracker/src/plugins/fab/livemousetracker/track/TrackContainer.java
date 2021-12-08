@@ -47,7 +47,7 @@ public class TrackContainer {
 //		LiveMouseTracker.multiIdentityAgentManager.disableAllCurrentRunningAgent();
 		anonymousTrackSegmentPool.removeTrack( track );
 
-		System.out.println("Identity set by " + setBy + " ts:" + track + " animal:"+animal );
+		//System.out.println("Identity set by " + setBy + " ts:" + track + " animal:"+animal );
 
 		// FOR DEBUG ONLY
 		// CHECK IF ANIMAL IS ALREADY HAVING A DETECTION OVERLAPPING
@@ -56,9 +56,9 @@ public class TrackContainer {
 		{
 			if ( track.overlapInT( animalTrack ) )
 			{
-				System.err.println("[SET TRACK IDENTITY ERROR: SEVERAL ANIMALS WITH SAME IDENTITY]");
+				//System.err.println("[SET TRACK IDENTITY ERROR: SEVERAL ANIMALS WITH SAME IDENTITY]");
 				Thread.dumpStack();
-				System.out.println("Correcting...");
+				//System.out.println("Correcting...");
 				LiveMouseTracker.trackContainer.setTrackAnonymous( animal , animalTrack );
 			}
 		}
@@ -111,11 +111,11 @@ public class TrackContainer {
 	public void setTrackAnonymous(Animal animal,
 			int firstTimePoint, int lastTimePoint) {
 
-		System.out.println("[SetTrackAnonymous] First time point: " + firstTimePoint );
-		System.out.println("[SetTrackAnonymous] Last time point: " + lastTimePoint );
+		//System.out.println("[SetTrackAnonymous] First time point: " + firstTimePoint );
+		//System.out.println("[SetTrackAnonymous] Last time point: " + lastTimePoint );
 
 		//System.out.println("Debug association: " + animal );
-		System.out.println("Split track start time point");
+		//System.out.println("Split track start time point");
 
 		// FIRST SPLIT and put back in the animal.
 
@@ -176,8 +176,8 @@ public class TrackContainer {
 	/** Take out a track from an animal and put it back in the anonymous track set. */
 	public void setTrackAnonymous(Animal animal, TrackSegment ts) {
 
-		System.out.println("[TrackContainer] Make anonymous track. " + ts );
-		System.out.println("[TrackContainer] Animal contain track: " + animal.contain( ts ) );
+		//System.out.println("[TrackContainer] Make anonymous track. " + ts );
+		//System.out.println("[TrackContainer] Animal contain track: " + animal.contain( ts ) );
 		animal.removeTrackSegment( ts );
 		for ( MouseDetection det : ts.getDetectionList() )
 		{
@@ -310,7 +310,7 @@ public class TrackContainer {
 	 * */
 	public void breakTooLongTrack( int t ) {
 
-		System.out.println("Breaking too long tracks at t=" + t );
+		//System.out.println("Breaking too long tracks at t=" + t );
 		for ( Animal animal : animalTrackSegmentPool.getAnimalList() )
 		{
 			ArrayList<TrackSegment> trackList = animal.getTrackSegments();
@@ -324,7 +324,7 @@ public class TrackContainer {
 					{
 						animal.addTrackSegment( tsSplit );
 					}
-					System.out.println( "Track splitted: " + track );
+					//System.out.println( "Track splitted: " + track );
 				}
 			}
 		}
@@ -340,7 +340,7 @@ public class TrackContainer {
 					{
 						anonymousTrackSegmentPool.add( tsSplit );
 					}
-					System.out.println( "Track splitted: " + track );
+					//System.out.println( "Track splitted: " + track );
 				}
 			}
 		}

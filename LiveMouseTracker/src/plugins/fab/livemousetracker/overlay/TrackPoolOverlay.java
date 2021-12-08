@@ -336,9 +336,10 @@ public class TrackPoolOverlay extends Overlay {
 			drawCenteredHint(gAbsolute,
 					"t:"+LiveMouseTracker.getT() + " " + Util.getTimeStamp(LiveMouseTracker.getT()) +
 					" rt:" + formatter.print( diffStartAndCurrentTime ) +
-					" cpu:" + cpuStr +"ms "+SystemUtil.getCpuLoad()+"% "+
-					" nbOver: " + LiveMouseTracker.nbOver+
-					" !proc: " + (int)( LiveMouseTracker.nbImageGrabbed-LiveMouseTracker.nbImageProcessed ),
+					" cpu:" + cpuStr +"ms "+SystemUtil.getCpuLoad()+"%"
+					//" nbOver: " + LiveMouseTracker.nbOver
+					//+" !proc: " + (int)( LiveMouseTracker.nbImageGrabbed-LiveMouseTracker.nbImageProcessed )
+					,
 					canvas.getWidth()/2, canvas.getHeight()-50, bgColor , Color.white);
 
 			if( aviSoftInfoDisplayCounter > 0 )

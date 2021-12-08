@@ -67,8 +67,8 @@ public class CachedAnimalMachineLearningClassifier {
 		{
 			animalListAsString+= animal.getName() + " ";
 		}
-		System.out.println("[CACHING MachineLearning] build animals: " + animalListAsString + " number of classes: " + candidateSet.numClasses() );
-		Chronometer chrono = new Chronometer( "[CACHING] " + animalListAsString );
+		//System.out.println("[CACHING MachineLearning] build animals: " + animalListAsString + " number of classes: " + candidateSet.numClasses() );
+		//Chronometer chrono = new Chronometer( "[CACHING] " + animalListAsString );
 		try {
 //			randomForest.setMaxDepth( 1000 );
 //			randomForest.setOptions( new String[]{ "-I 1000" , "-num-slots 0", "-N 5", "-B" } );
@@ -80,14 +80,14 @@ public class CachedAnimalMachineLearningClassifier {
 			}
 		}
 		catch ( WekaException e) {
-			System.err.println("[LEARNING] Track identity problem: Can't build classifier.");
-			System.out.println("[LEARNING] Reason: " + e.getMessage() );
+			//System.err.println("[LEARNING] Track identity problem: Can't build classifier.");
+			//System.out.println("[LEARNING] Reason: " + e.getMessage() );
 		}
 		catch ( Exception e2 )
 		{
 			e2.printStackTrace();
 		}
-		chrono.displayInSeconds();
+		//chrono.displayInSeconds();
 
 	}
 

@@ -65,7 +65,7 @@ public class MultiIdentityAgentManager {
 			if ( potentialAnimalList.size() == 1 )
 			{
 				LiveMouseTracker.trackContainer.setTrackIdentity( tsCandidate , potentialAnimalList.get( 0 ), "_ML" );
-				System.out.println("Obvious tracking association.");
+				//System.out.println("Obvious tracking association.");
 
 				try
 				{
@@ -89,7 +89,7 @@ public class MultiIdentityAgentManager {
 
 	public void process( AnonymousPool trackSegmentPool )
 	{
-		Chronometer chrono = new Chronometer("MultiIdentity Chronometer");
+		//Chronometer chrono = new Chronometer("MultiIdentity Chronometer");
 //		Message message = PerfLoggerOverlay.addMessage( new Message( "Multi id agent." ));
 
 		try
@@ -138,10 +138,10 @@ public class MultiIdentityAgentManager {
 			// Assign new identifier if slot available and problem exists.
 			for ( int i = 0 ; i < NB_MAX_IDENTIFIER ; i++ )
 			{
-				System.out.println("Checking identity agent #"+ i + " / "  );
-				chrono.displayMs();
+				//System.out.println("Checking identity agent #"+ i + " / "  );
+				//chrono.displayMs();
 
-				System.out.println("END SYNCHRONIZED STARTED");
+				//System.out.println("END SYNCHRONIZED STARTED");
 				Identifier identifier = identifierArray[i];
 //				System.out.println("Identifier: " + identifier );
 				if ( identifier!=null )
@@ -162,8 +162,8 @@ public class MultiIdentityAgentManager {
 					TrackSegment trackSegmentToProcess = null;
 
 					synchronized (trackSegmentPool.trackSegmentArrayList) {
-						System.out.println("SYNCHRONIZED STARTED");
-						chrono.displayMs();
+						//System.out.println("SYNCHRONIZED STARTED");
+						//chrono.displayMs();
 
 						switch (i) {
 						case 0: // Will launch a solver on the last track found
@@ -186,8 +186,8 @@ public class MultiIdentityAgentManager {
 							trackSegmentToProcess = trackSegmentPool.trackSegmentArrayList.get((int)( Math.random() *(trackSegmentPool.trackSegmentArrayList.size() - 1)));
 							break;
 						}
-						chrono.displayMs();
-						System.out.println("END SYNCHRONIZED STARTED");
+						//chrono.displayMs();
+						//System.out.println("END SYNCHRONIZED STARTED");
 					}
 
 					if ( trackSegmentToProcess == null )
@@ -215,7 +215,7 @@ public class MultiIdentityAgentManager {
 
 					if ( !anIdentifierIsAlreadyWorkingOnThisTrack )
 					{
-						System.out.println("Multi: Starting identifier");
+						//System.out.println("Multi: Starting identifier");
 						final TrackSegment trackSegmentToProcessFinal = trackSegmentToProcess;
 						final int index = i;
 						LiveMouseTracker.threadExecutor.execute( new Runnable() {
@@ -237,14 +237,14 @@ public class MultiIdentityAgentManager {
 		{
 //			PerfLoggerOverlay.removeMessage( message );
 			// System.out.println("[MULTI AGENT IDENTIFIER MANAGER] Finished.");
-			System.out.println("Total multi agent identifier time: "  );
-			chrono.displayMs();
+			//System.out.println("Total multi agent identifier time: "  );
+			//chrono.displayMs();
 		}
-		chrono.displayMs();
+		//chrono.displayMs();
 	}
 
 	public void disableAllCurrentRunningAgent( ) {
-		System.out.println("Disable machine learning identity agent.");
+		//System.out.println("Disable machine learning identity agent.");
 
 		int workingIdentifier = 0;
 		for ( int i = 0 ; i < NB_MAX_IDENTIFIER ; i++ )
@@ -264,7 +264,7 @@ public class MultiIdentityAgentManager {
 				}
 			}
 		}
-		System.out.println("Number of agent disabled: " + workingIdentifier );
+		//System.out.println("Number of agent disabled: " + workingIdentifier );
 	}
 
 }

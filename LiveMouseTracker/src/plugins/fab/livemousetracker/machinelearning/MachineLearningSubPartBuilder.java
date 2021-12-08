@@ -213,7 +213,7 @@ public class MachineLearningSubPartBuilder {
 				break;
 			}
 		}
-		System.out.println("[SUB PART ML] animal: " + animal.getName() + " nb ML Instances: " + set.numInstances() );
+		//System.out.println("[SUB PART ML] animal: " + animal.getName() + " nb ML Instances: " + set.numInstances() );
 	}
 
 	private boolean isDetectionOkForLearning( MouseDetection mouseDetection )
@@ -589,9 +589,9 @@ public class MachineLearningSubPartBuilder {
 			classifier.buildClassifier( set );
 		} catch (Exception e) {
 
-			System.out.println("This error is handled:");
+			System.out.println("This error is handled:Not enough training instances with class labels");
 			//e.printStackTrace();
-			 System.out.println("Not enough training instances with class labels");
+
 		}
 
 		return classifier;

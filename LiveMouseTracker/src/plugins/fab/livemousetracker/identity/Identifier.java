@@ -134,7 +134,7 @@ public class Identifier extends Thread {
 
 				if ( LiveMouseTracker.LOG_IDENTIFIER )
 				{
-					System.out.println("track length: " + tip.getTrack().getLength() );
+					//System.out.println("track length: " + tip.getTrack().getLength() );
 				}
 
 				if ( LiveMouseTracker.PROCESS_ID_CHECK_ON_OLD_TRACK_EVEN_WITH_WRONG_LENGTH )
@@ -149,7 +149,7 @@ public class Identifier extends Thread {
 				{
 					if ( LiveMouseTracker.LOG_IDENTIFIER )
 					{
-						System.out.println("Problem dropped: too small tracks. (<"+LiveMouseTracker.MIN_TRACK_LENGTH_TO_PROCESS_ID_CHECK+")" );
+						//System.out.println("Problem dropped: too small tracks. (<"+LiveMouseTracker.MIN_TRACK_LENGTH_TO_PROCESS_ID_CHECK+")" );
 					}
 					return;
 				}
@@ -179,7 +179,7 @@ public class Identifier extends Thread {
 				}
 
 				tip.applyTrackConstraints();
-				System.out.println( tip );
+				//System.out.println( tip );
 			}
 
 			// Compute individual detection track score.
@@ -221,7 +221,7 @@ public class Identifier extends Thread {
 			{
 				if ( LiveMouseTracker.LOG_IDENTIFIER )
 				{
-					System.out.println("identity agent abort. reason: disabled.");
+					//System.out.println("identity agent abort. reason: disabled.");
 				}
 				return;
 			}

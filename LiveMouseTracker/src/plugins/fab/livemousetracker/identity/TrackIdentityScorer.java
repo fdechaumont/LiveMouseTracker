@@ -71,7 +71,7 @@ public class TrackIdentityScorer implements Runnable {
 		{
 			// There is only 1 animal in the candidate set,
 			// creates a fake scorelist answer without the machine learning
-			System.out.println("Only 1 animal in candidate set");
+			//System.out.println("Only 1 animal in candidate set");
 			ArrayList<Animal> animalList = LiveMouseTracker.getMainAnimalPool().animalList;
 			double[] score = new double[ animalList.size() ];
 			for ( int i = 0 ; i < score.length ; i++ )
@@ -87,7 +87,7 @@ public class TrackIdentityScorer implements Runnable {
 
 		if ( cachedClassifier == null )
 		{
-			System.out.println("Can't create/get classifier.");
+			//System.out.println("Can't create/get classifier.");
 			return;
 		}
 
@@ -109,10 +109,10 @@ public class TrackIdentityScorer implements Runnable {
 			}
 		}
 
-		System.out.println( "trackSegment: " + getTrack() + " length: " + getTrack().getLength() + "det kept: " + selectedDetectionList.size() );
+		//System.out.println( "trackSegment: " + getTrack() + " length: " + getTrack().getLength() + "det kept: " + selectedDetectionList.size() );
 		if( LiveMouseTracker.LOG_CHAIN )
 		{
-			System.out.println("Track last point: " + getTrack().getDetection( getTrack().getLastTimePoint() ) );
+			//System.out.println("Track last point: " + getTrack().getDetection( getTrack().getLastTimePoint() ) );
 		}
 
 		for ( MouseDetection mouseDetection : selectedDetectionList ) //getTrack().getDetectionList() )
@@ -155,11 +155,13 @@ public class TrackIdentityScorer implements Runnable {
 						}
 					}
 					int detectionIndex = selectedDetectionList.indexOf( mouseDetection );
+					/*
 					System.out.println( ""+ this.hashCode() + ":"
 							+ detectionIndex + ":"
 							+ Arrays.toString( percentage )
 							+ " : " + bestIndex
 							+ " : " + getCandidateAnimalList().get( bestIndex ).getName() );
+							*/
 				}
 
 				scoreList.add( percentage );
@@ -173,7 +175,7 @@ public class TrackIdentityScorer implements Runnable {
 
 	private CachedAnimalMachineLearningClassifier getClassifier() {
 
-		System.out.println("[TrackIdentityProblem] Requesting cache.");
+		//System.out.println("[TrackIdentityProblem] Requesting cache.");
 		CachedAnimalMachineLearningClassifier cachedClassifier = CachedAnimalMachineLearningManager.getCache( candidateAnimalList , true );
 		return cachedClassifier;
 		/*
@@ -239,9 +241,9 @@ public class TrackIdentityScorer implements Runnable {
 	@Override
 	public void run() {
 
-		Chronometer chrono = new Chronometer("[TrackIndentityProblem] " + this );
+		//Chronometer chrono = new Chronometer("[TrackIndentityProblem] " + this );
 		computeDetectionScores();
-		chrono.displayMs();
+		//chrono.displayMs();
 	}
 
 	public void applyTrackConstraints() {

@@ -69,7 +69,7 @@ public class MachineLearningSetBuilder {
 		{
 			animalList += animal.getName() + " ";
 		}
-		Chronometer buildSetChronometer = new Chronometer("Machine Learning build set " + animalList );
+		//Chronometer buildSetChronometer = new Chronometer("Machine Learning build set " + animalList );
 
 
 		// attributs
@@ -197,7 +197,7 @@ public class MachineLearningSetBuilder {
 //				}
 //			}
 
-		buildSetChronometer.displayInSeconds();
+		//buildSetChronometer.displayInSeconds();
 
 		this.set = trainingSet;
 		return trainingSet;
@@ -263,7 +263,7 @@ public class MachineLearningSetBuilder {
 					System.err.println("MachineLearning set builder null pointer.");
 				}
 			}
-			System.out.println("[LEARNING][ML SET BUILDER] Animal " + animal.getName() + " built with " + nbDetection + " detections." );
+			//System.out.println("[LEARNING][ML SET BUILDER] Animal " + animal.getName() + " built with " + nbDetection + " detections." );
 
 		}
 
