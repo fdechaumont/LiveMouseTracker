@@ -322,8 +322,6 @@ public class RFIDManager2 implements AntennaReadListener, AcceptListener {
 		// if no anonymous track is found,
 		// find an animal to check against its identity.
 
-		// CHECK ANIMALS WITH ID CHECK ON
-	// TODO:
 
 		// CHECK ANIMALS
 		if ( antennaToActivate == null )
