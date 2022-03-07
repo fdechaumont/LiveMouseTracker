@@ -71,8 +71,8 @@ public final class Rendering3Dv3 {
 	Overlay3D overlay3D = null;
 	
 	long renderTimeMs = 0;
-	public int zClipFar = 1000;
-	public int zClipClose = 510;
+	public int zClipFar = 2000; // 1000
+	public int zClipClose = 0;  // 510
 	public int imageToRecord = 0;
 	
     public Rendering3Dv3() {
@@ -99,16 +99,17 @@ public final class Rendering3Dv3 {
     	channelArray[1].color = Color.GREEN;
     	channelArray[2].color = Color.BLUE;
     	
-    	channelArray[0].translation = new Point3f( 0, 257 , 0 );
-    	channelArray[1].translation = new Point3f( -16, -279 , 23 ); // short distance config
+    	channelArray[0].translation = new Point3f( 0, 252 , 28 );
+    	//channelArray[1].translation = new Point3f( -16, -279 , 23 ); // short distance config
+    	channelArray[1].translation = new Point3f( -11, -319 , -6 ); // short distance config
     	
+    	channelArray[0].xRot= 13; // 17
+    	channelArray[0].yRot= 1;
     	channelArray[0].zRot= 0;
-    	channelArray[0].yRot= 0;
-    	channelArray[0].xRot= 17;
     	
+    	channelArray[1].xRot= -18; // -24
+    	channelArray[1].yRot= -2; // -2
     	channelArray[1].zRot= 180;
-    	channelArray[1].yRot= -4;
-    	channelArray[1].xRot= -24;
     	
     	channelArray[1].computeMatrix();
     	
@@ -214,7 +215,7 @@ public final class Rendering3Dv3 {
     		depthBuffer[i] = 0;
     	}
     	
-    	int FUSION_MODE = 4;
+    	int FUSION_MODE = 4; //4
     	
     	
     	// init z buffer
@@ -388,12 +389,14 @@ public final class Rendering3Dv3 {
     			p.y += channel.translation.y;
     			p.z += channel.translation.z;
     			
+    			/*
     			if ( p.z < zClipClose || p.z > zClipFar ) // z clip
     			{
     				p.z = 0; // set to out of view.
     				p.x = -100000;
     				p.y = 0; 
-    			}    			
+    			} 
+    			*/   			
         		
     			// global transform
     			p.x += mainTranslate.x;

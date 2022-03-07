@@ -254,7 +254,7 @@ public class Overlay3D extends Overlay {
     	{
     		if ( channel.enabled )
     		{
-    			g.drawString( "Channel "+ channel.number + ": translate: "+ channel.translation, 10, yText );
+    			g.drawString( "Channel "+ channel.number + ": translate: "+ channel.translation + " : rotate: " + channel.xRot+","+channel.yRot+","+channel.zRot, 10, yText );
     			yText+=fontSize;
     		}
     	}    	
