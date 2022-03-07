@@ -551,9 +551,10 @@ public class TrackPoolOverlay extends Overlay {
 					{
 						g.setColor( animal.getColor() );
 						TrackSegment trackContainingDetection = animal.getTrackContainingDetection( lastDetection );
-						g.drawString( animal.getName() + " " +
-								trackContainingDetection.getIdentityAffectedBy()
-						+" " + trackContainingDetection.getOrientationAffectedBy(),
+						g.drawString( animal.getName() + " " + trackContainingDetection.nbFrameSinceLastRFIDReading
+								//trackContainingDetection.getIdentityAffectedBy()
+						//+" " + trackContainingDetection.getOrientationAffectedBy()
+						,
 						(int)lastDetection.getMassCenter().getX(),
 						(int)lastDetection.getMassCenter().getY() );
 					}
@@ -561,6 +562,9 @@ public class TrackPoolOverlay extends Overlay {
 
 
 			}
+			
+			
+			
 		}
 
 		// Draw track as a time line.
@@ -599,6 +603,17 @@ public class TrackPoolOverlay extends Overlay {
 							displayRect, currentT , tWindow , stepX );
 					//					drawMustBeCanBe( ts , g ) ;
 					y+=10;
+					
+					try
+					{
+						MouseDetection lastDetection = ts.getDetection( ts.getLastTimePoint() );
+						g.drawString( "" + ts.nbFrameSinceLastRFIDReading,
+								(int)lastDetection.getMassCenter().getX(),
+								(int)lastDetection.getMassCenter().getY() );
+					}catch( Exception e )
+					{
+						
+					}
 				}
 			}
 
@@ -1044,6 +1059,7 @@ public class TrackPoolOverlay extends Overlay {
 			updateDisplayMode();
 			return;
 		}
+	
 
 		if ( e.getKeyChar() == '*' )
 		{

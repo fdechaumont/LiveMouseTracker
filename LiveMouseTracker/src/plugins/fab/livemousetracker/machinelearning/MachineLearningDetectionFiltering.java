@@ -85,8 +85,7 @@ public class MachineLearningDetectionFiltering {
 			detectionInstance.setDataset( errorSet );
 
 			try {
-				double[] percentage = classifier.distributionForInstance(
-						detectionInstance );
+				double[] percentage = classifier.distributionForInstance( detectionInstance );
 				mouseDetection.detectionChanceWithMLFilter = percentage[1];
 				boolean detectionIsOk = true;
 				//System.out.println("ML rej. Detection: " + percentage[1] );
@@ -107,8 +106,8 @@ public class MachineLearningDetectionFiltering {
 				}
 
 			} catch (Exception e) {
-
-				e.printStackTrace();
+				System.out.println("t:" + LiveMouseTracker.getT()+ " ML filter not working");
+				//e.printStackTrace();
 			}
 		}
 

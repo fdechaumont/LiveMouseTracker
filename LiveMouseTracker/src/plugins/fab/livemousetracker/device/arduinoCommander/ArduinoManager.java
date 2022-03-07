@@ -29,6 +29,7 @@ import jssc.SerialPortException;
 import jssc.SerialPortTimeoutException;
 import plugins.fab.livemousetracker.LiveMouseTracker;
 import plugins.fab.livemousetracker.Util;
+import plugins.fab.livemousetracker.overlay.Event;
 import plugins.fab.livemousetracker.serial.SerialDriverPlugin;
 
 /**
@@ -99,14 +100,15 @@ public class ArduinoManager extends Thread {
 			serial.readBytes( serial.getInputBufferBytesCount() , 10 );
 		} catch (SerialPortException e) {
 			//e.printStackTrace();
-			System.out.println("[Serial] Read error on port " + comPort );
+			System.out.println("[Serial t:"+LiveMouseTracker.getT()+"] Read error on port " + comPort );
 			faulty = true;
 		} catch (SerialPortTimeoutException e) {
 			// TimeOut sur lecture du port com.
-			System.out.println("[Serial] Time out on port " + comPort );
+			System.out.println("[Serial t:"+LiveMouseTracker.getT()+"] Time out on port " + comPort );
 		} catch ( NegativeArraySizeException e2 )
 		{
-			System.out.println("[Serial] Negative Arrray size exception.");
+			System.out.println("[Serial t:"+LiveMouseTracker.getT()+"] Negative Arrray size exception. " + comPort );
+			
 		}
 		readData ="";
 	}
@@ -312,10 +314,11 @@ public class ArduinoManager extends Thread {
 
 	public void shutdown() {
 
+		stopReadingThread = true;
+
 		if ( faulty ) return;
 
 		try {
-			stopReadingThread = true;
 			serial.closePort();
 			System.out.println("RFID Antenna "+ comPort + " shutdown.");
 		} catch (SerialPortException e) {

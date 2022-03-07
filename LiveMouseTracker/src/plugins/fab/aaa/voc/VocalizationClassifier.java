@@ -63,65 +63,27 @@ public class VocalizationClassifier {
 	}
 
 	private boolean isModulated(Voc voc) {
-
-		/*
-		float direction = 0;
-
-		for ( int i = 0 ; i < voc.pointList.size()-2 ; i++ )
-		{
-			Point pA = voc.pointList.get( i );
-			Point pB = voc.pointList.get( i+2 );
-
-			float newDirection = pA.y - pB.y;
-			if ( i == 0 )
-			{
-				direction = newDirection;
-			}
-
-			if ( Math.abs( newDirection ) < 2 ) continue;
-
-			if ( !sameSign( direction , newDirection ) )
-			{
-				voc.nbModulation++;
-				voc.modulationList.add( (int) pA.x );
-
-			}
-			direction = newDirection;
-
-//			if ( Math.abs( newDirection ) > 2 )
-//			{
-//				direction = newDirection;
-//			}
-
-		}*/
-
-		{
-
-//			System.out.println("Modulation detection start");
 			double slope = ( voc.pB.getY() - voc.pA.getY() ) / ( voc.pB.getX() - voc.pA.getX() );
 			//slope = -slope; // point A & B are reversed.
 			double y = voc.pB.getY();
 			int threshold = 3;
 			double bestDistance = 0;
 			int bestX = 0;
-
 			int w = 0; // width of the side
 			int side = 0; // side sign
 			int sidePrevious = 0;
-//			System.out.println("vocPAX:"+voc.pA.getX() );
-//			System.out.println("vocPBX:"+voc.pB.getX() );
 			int xMin = (int)Math.min( voc.pA.getX() , voc.pB.getX() );
 			int xMax = (int)Math.max( voc.pA.getX() , voc.pB.getX() );
 
 			for ( int x = xMin ; x <= xMax ; x++ )
 			{
-//				System.out.println("x:"+x);
+
 				Point p = voc.getPointAt( x );
 				if ( p != null )
 				{
 					w++;
 					double dif = y - p.y;
-//					System.out.println( "dif:" + dif );
+
 					boolean ok = false;
 					if ( dif > threshold )
 					{
@@ -136,7 +98,6 @@ public class VocalizationClassifier {
 					}
 					if ( ok )
 					{
-
 						if ( side == sidePrevious )
 						{
 							if ( Math.abs( dif ) > bestDistance )
@@ -148,12 +109,9 @@ public class VocalizationClassifier {
 						else
 						{
 							if ( Math.abs( bestDistance ) > threshold )
-							{
-								//							if ( w> 5 )
-								{
-									voc.nbModulation++;
-									voc.modulationList.add( bestX );
-								}
+							{								
+								voc.nbModulation++;
+								voc.modulationList.add( bestX );								
 							}
 							bestDistance = 0;
 							w=0;
@@ -168,21 +126,12 @@ public class VocalizationClassifier {
 			// finish
 			if ( Math.abs( bestDistance ) > threshold )
 			{
-//				if ( w> 5 )
-				{
 					voc.modulationList.add( bestX );
-				}
 			}
-
-		}
-
-
-
 		if ( voc.nbModulation > 0 )
 		{
 			return true;
 		}
-
 		return false;
 
 	}

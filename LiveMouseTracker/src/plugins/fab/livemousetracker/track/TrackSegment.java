@@ -506,6 +506,8 @@ public class TrackSegment {
 	 * Could also be an hashmap of track associated that could be reset at each frame. Then this would be in the track prolongator class.
 	 * */
 	public boolean canBeProlongated = true;
+	public int nbFrameSinceLastRFIDReading=10000;
+	public int priorityReading = 0 ;
 
 	public void setIdentityAffectedBy(String identityAffectedBy ) {
 		this.identityAffectedBy = identityAffectedBy;

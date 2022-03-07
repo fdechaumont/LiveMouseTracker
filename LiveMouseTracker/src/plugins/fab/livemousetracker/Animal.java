@@ -382,6 +382,9 @@ public class Animal {
 	}
 
 	public double truePositiveRate = 0;
+	
+	public int nbFrameSinceLastRFIDReading = 0;
+	public int priorityRFIDReading = 0;
 
 	public void setTruePositiveRate(double value) {
 			this.truePositiveRate = value;

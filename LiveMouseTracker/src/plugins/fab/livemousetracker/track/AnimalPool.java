@@ -214,7 +214,7 @@ public class AnimalPool extends AbstractTrackPool {
 
 		if ( animalWithDetection.getRfidID() != null ) // Animal has already an id.
 		{
-			System.err.println("[RFID] Affectation Error: Animal has already an RFID");
+			System.err.println("[RFID + t:"+LiveMouseTracker.getT()+" ] Affectation Error: Animal has already an RFID");
 			return false;
 		}
 
@@ -228,14 +228,14 @@ public class AnimalPool extends AbstractTrackPool {
 			{
 				if ( animalId.equals( id ) )
 				{
-					System.out.println("[RFID] Cannot assign RFID. Already used by another animal.");
+					System.out.println("[RFID + t: "+LiveMouseTracker.getT()+ " ] Cannot assign RFID. Already used by another animal.");
 					// id already affected to another animal.
 					return false;
 				}
 			}
 		}
 
-		System.out.println("[RFID] Setting id " + id + " to animal " + animalWithDetection );
+		System.out.println("[RFID + t: "+LiveMouseTracker.getT()+ " ] Setting id " + id + " to animal " + animalWithDetection );
 		animalWithDetection.setRfidID( id );
 
 		return true;

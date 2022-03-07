@@ -1,4 +1,4 @@
-package plugins.fab.aaa.kinectDK;
+package plugins.fab.aaa.kinectDKTest;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

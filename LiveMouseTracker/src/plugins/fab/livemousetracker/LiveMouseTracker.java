@@ -65,6 +65,7 @@ import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 import icy.type.point.Point3D;
 import loci.formats.FormatException;
+import plugins.fab.azure.kinect.TestAzureKinectDriverFab3D;
 import plugins.fab.kinectdriver.KinectData;
 import plugins.fab.kinectdriver.KinectEvent;
 import plugins.fab.kinectdriver.KinectListener;
@@ -284,7 +285,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static final boolean USE_MACHINELEARNING_CACHE = true;
 	private static final boolean MANAGE_FRAME_DROP = false;
 	public static final boolean HEAD_TAIL_MACHINE_LEARNING = true;
-	public static boolean USE_MULTIPLE_IDENTITY_RECOVERY_WITH_MACHINE_LEARNING = true; // false for diseapearring animals
+	public static boolean USE_MULTIPLE_IDENTITY_RECOVERY_WITH_MACHINE_LEARNING = false; // false for diseapearring animals
 
 	private static boolean SAVE_BACKGROUND = false;
 	public int saveBackgroundEachNumberOfFrame = 30*60;
@@ -340,7 +341,6 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 //	public static ColorMode ANIMAL_COLOR_DETECTION_MODE = ColorMode.AUTO_OR_MIX;
 
-	static KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
 
 	/** merged data */
 	private static Sequence infraOut = null;
@@ -399,9 +399,9 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static BackgroundHeightMapBuilder getBackgroundHeightMapBuider() {
 		return backgroundHeightMapBuilder;
 	}
-	public static KinectStreamer getKinectStreamer() {
-		return kinectStreamer;
-	}
+//	public static KinectStreamer getKinectStreamer() {
+//		return kinectStreamer;
+//	}
 
 	public static Sequence getThermalSequence() {
 		return thermalSequence;
@@ -423,6 +423,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 
+	static KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
+	//TestAzureKinectDriverFab3D kinectStreamer = new TestAzureKinectDriverFab3D();
+
+	
 	public enum CRITICAL_LOOP_STEP
 	{
 		s01_Start,
@@ -1365,6 +1369,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 			// check if detection is far too big and correspond to artefact of the kinect
 			// specifically the horizontal bar that can appear sometimes
+			/*
 			if ( tooBigDetection.getBounds2D().getWidth() > 260 )
 			{
 				correctBackGround( depthImage , tooBigDetection.getBooleanMask( true ) );
@@ -1372,6 +1377,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				LiveMouseTracker.resetBackGround();
 				break;
 			}
+			*/
 
 			if ( REJECT_DETECTION_IF_SPLIT )
 			{
@@ -1660,7 +1666,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		if ( RFID_ENABLED )
 		{
-			rfidManager.activateAntennas();
+			if ( t%3 == 0 )
+			{
+				rfidManager.activateAntennas2();
+			}
 			RFIDSolver2.rfidManagment(rfidManager);
 		}
 		//performanceMonitor.stepDone("RFID Solver");
@@ -2381,7 +2390,13 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			{
 				devCorrection = Float.parseFloat( guiPanel.getDevValue01().getText() );
 			}catch( Exception e ) {}
-			mlDetectionFiltering.filter( rawMouseDetectionList , devCorrection );
+			try
+			{				
+				mlDetectionFiltering.filter( rawMouseDetectionList , devCorrection );
+			}catch( Exception e )
+			{
+				System.out.println("t:"+ t + " Cannot filter detections with ML.");
+			}
 
 			if ( TRACK_REJECTED_TRACKING_ENABLED )
 			{
@@ -3032,6 +3047,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 //			{
 //				addSequence( depthOut );
 //			}
+			System.out.println("Depth sequence registered.");
 			tryToInit();
 		}
 
@@ -3043,7 +3059,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 			// Sequence that is created from the kinect driver.
 //			addSequence( infraOutLocal );
-
+			System.out.println("Infra sequence registered.");
 			tryToInit();
 		}
 
@@ -3055,10 +3071,14 @@ implements KinectListener, ActionListener, IcyFrameListener {
 //				lutInfraDone = true;
 //			}
 
+			
 			IcyBufferedImage img;
 
 			img = infraOutLocal.getImage( 0 , 0 );
 			IcyBufferedImage newInfraImage = new IcyBufferedImage(img.getWidth(), img.getHeight(), Array1DUtil.copyOf(img.getDataXY(0)));
+			
+			//System.out.println("Receive infra: " + img.getWidth() );
+			
 			img = depthOutLocal.getImage( 0 , 0 );
 			IcyBufferedImage newDepthImage = new IcyBufferedImage(img.getWidth(), img.getHeight(), Array1DUtil.copyOf(img.getDataXY(0)));
 
@@ -3127,8 +3147,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	 * */
 	private void tryToInit() {
 
+		System.out.println("Try init..." + depthOut + infraOut + initDone);
 		if ( depthOut != null && infraOut != null && initDone == false )
 		{
+			System.out.println("Starting init...");
 			init();
 		}
 	}
@@ -3805,10 +3827,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		System.out.println("Start live button");
 
-		kinectStreamer.startLive();
 		guiPanel.getStartLiveButton().setEnabled( false );
 		guiPanel.getStopButton().setEnabled( true );
 		guiPanel.getPauseButton().setEnabled( true );
+		
+		//kinectStreamer.startLive(); // previous init location
 
 // OLD location of LMTRemoteAreaServer
 //		if ( guiPanel.getCheckBoxMultiArenaMode().isSelected() )
@@ -3822,12 +3845,15 @@ implements KinectListener, ActionListener, IcyFrameListener {
 //			}
 //		}
 
+		
+		System.out.println("Creating sequences infra and depthOut");
 		infraOut = new Sequence("Infra Merged Out");
 		depthOut = new Sequence("Infra Depth Out");
 
-		Icy.getMainInterface().addSequence( infraOut );
+		Icy.getMainInterface().addSequence( infraOut );		
 		//Icy.getMainInterface().addSequence( depthOut );
 
+		kinectStreamer.startLive(); // was previously -20 lines before
 
 
 		// infraMergedOut = new Sequence("Infra Merged");
@@ -4150,14 +4176,22 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 				System.out.println("[ShutDown] Enter function.");
 
-				System.out.println("[ShutDown] KinectStream State: " + kinectStreamer.getState() );
-				if ( kinectStreamer.getState() == StreamerState.PLAYFILE ){
-					kinectStreamer.stopRecordedPlay();
-				}
+				//System.out.println("[ShutDown] KinectStream State: " + kinectStreamer.getState() );
+//				if ( kinectStreamer.getState() == StreamerState.PLAYFILE ){
+//					kinectStreamer.stopRecordedPlay();
+//				}
 
-				if ( kinectStreamer.getState() == StreamerState.LIVE ){
+//				if ( kinectStreamer.getState() == StreamerState.LIVE ){
+				
+				try {					
 					kinectStreamer.stopLive();
+				}catch( Exception e)
+				{
+					System.out.println("Failed to stop kinect stream");
+					e.printStackTrace();
 				}
+				
+//				}
 
 				if ( RFID_ENABLED )
 				{

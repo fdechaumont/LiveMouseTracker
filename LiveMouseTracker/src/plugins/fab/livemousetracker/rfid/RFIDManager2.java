@@ -24,6 +24,7 @@ import icy.common.listener.AcceptListener;
 import icy.main.Icy;
 import icy.type.point.Point3D;
 import plugins.fab.kinectdriver.KinectStreamer.StreamerState;
+import plugins.fab.livemousetracker.Animal;
 import plugins.fab.livemousetracker.LiveMouseTracker;
 import plugins.fab.livemousetracker.detection.MouseDetection;
 import plugins.fab.livemousetracker.track.TrackSegment;
@@ -121,10 +122,10 @@ public class RFIDManager2 implements AntennaReadListener, AcceptListener {
 	public void antennaEvent(AntennaReadEvent rfidEvent) {
 
 //		System.out.println("[RFID] Event read.");
-		if ( LiveMouseTracker.getKinectStreamer().getState() == StreamerState.PLAYFILE )
-		{
-			return; // don't consider antenna during replays.
-		}
+//		if ( LiveMouseTracker.getKinectStreamer().getState() == StreamerState.PLAYFILE )
+//		{
+//			return; // don't consider antenna during replays.
+//		}
 
 //		System.out.println("[RFID] Adding event.");
 
@@ -279,10 +280,103 @@ public class RFIDManager2 implements AntennaReadListener, AcceptListener {
 
 	}
 	*/
+	
+	public Antenna getAntennaAvailable( TrackSegment ts )
+	{
+		MouseDetection detection = ts.getDetection( LiveMouseTracker.getT() - 1 );
+		Point3D p = detection.getMassCenter();
+		
+		Antenna antennaToActivate = null;
+		double bestDistance = Double.MAX_VALUE;
+		
+		for ( Antenna antenna : getAntennaList() )
+		{
+			if ( antenna.isFaulty() ) continue;
+
+			double distance = p.toPoint2D().distance( antenna.getLocation() );
+			if ( distance > 30 ) continue;
+
+				if ( distance < bestDistance )
+				{
+					bestDistance = distance;
+					antennaToActivate = antenna;
+				}
+		}		
+		return antennaToActivate;
+	}
+	
+	/**
+	 * This method will activate antenna with specific strategy 
+	 * Strategy: -
+	 * */
+	public void activateAntennas2() {
+
+		Antenna antennaToActivate = null;
+		
+		// date tracks.
+		// super old tracks are not priority
+		// very new ones are priority
+		
+		ArrayList<TrackSegment> allTrackSegments = new ArrayList<TrackSegment>();
+		
+		// increase nbFrameSinceLastRFIDReading for each animal tracks. 		
+		
+		ArrayList<TrackSegment> animalTrackList = LiveMouseTracker.trackContainer.animalTrackSegmentPool.
+				getTrackSegmentsContaining( LiveMouseTracker.getT() - 1 );
+		for ( TrackSegment track : animalTrackList )
+		{
+			track.nbFrameSinceLastRFIDReading++;
+			allTrackSegments.add( track );
+		}
+		
+		// increase nbFrameSinceLastRFIDReading for each animal anonymous tracks.
+		
+		ArrayList<TrackSegment> anonymousTrackList = LiveMouseTracker.trackContainer.anonymousTrackSegmentPool.
+				getTrackSegmentsContaining( LiveMouseTracker.getT() - 1 );
+
+		for ( TrackSegment track : anonymousTrackList )
+		{
+			track.nbFrameSinceLastRFIDReading++;
+			allTrackSegments.add( track );
+		}
+		
+		// set priority TODO: REMOVE THIS
+		for ( TrackSegment track : allTrackSegments )
+		{
+			track.priorityReading = track.nbFrameSinceLastRFIDReading % (30*5);			
+		}
+		
+		//display priority reading on track
+		
+		while ( allTrackSegments.size() > 0 )
+		{
+			TrackSegment ts = getMaxPriorityTrackSegment( allTrackSegments );
+			
+			Antenna antenna = getAntennaAvailable( ts );
+			if ( antenna != null )
+			{
+				antennaToActivate = antenna;
+				break;
+			}
+			allTrackSegments.remove( ts );
+		}
+		
+		if ( antennaToActivate == null )
+		{
+			disableAllAntennas();
+			return;
+		}
+
+		activateOnlyAntenna( antennaToActivate );
+		
+
+	}
 
 	/**
-	 * This method will activate antenna with specific strategy
+	 * This method will activate antenna with specific strategy 
+	 * Strategy: closest antenna. anonymous first
 	 * */
+	/*
 	public void activateAntennas() {
 
 		// find antenna to activate.
@@ -326,7 +420,7 @@ public class RFIDManager2 implements AntennaReadListener, AcceptListener {
 		// CHECK ANIMALS
 		if ( antennaToActivate == null )
 		{
-			// get anonymous tracks.
+			// get tracks of animals.
 			ArrayList<TrackSegment> animalTrackList = LiveMouseTracker.trackContainer.animalTrackSegmentPool.
 					getTrackSegmentsContaining( LiveMouseTracker.getT() - 1 );
 
@@ -366,7 +460,23 @@ public class RFIDManager2 implements AntennaReadListener, AcceptListener {
 
 
 	}
+	*/
 
+
+	private TrackSegment getMaxPriorityTrackSegment(ArrayList<TrackSegment> allTrackSegments) {
+
+		int max = -1;
+		TrackSegment mostPriorityTrackSegment = null;
+		for ( TrackSegment ts : allTrackSegments )
+		{
+			if ( ts.priorityReading > max )
+			{
+				mostPriorityTrackSegment = ts;
+				max = ts.priorityReading;
+			}
+		}
+		return mostPriorityTrackSegment;
+	}
 
 	/** enable an antenna and disable all others. */
 	public void activateOnlyAntenna( Antenna antennaToActivate) {

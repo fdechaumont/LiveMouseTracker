@@ -272,6 +272,7 @@ public class RFIDSolver2 {
 				event.setText("Must be: " + animal );
 				LiveMouseTracker.addEventLogToDataBase( new EventLog( "RFID ASSIGN ANONYMOUS TRACK" , animal ) );
 				trackSegment.mustBe( animal );
+				trackSegment.nbFrameSinceLastRFIDReading = 0;
 
 //				trackSegmentPool.remove( trackSegment );
 //				animal.addTrackSegment( trackSegment );
@@ -317,6 +318,7 @@ public class RFIDSolver2 {
 		{
 //			System.out.println("[RFID] Match" + animalWithDetection + "/" + animalOwningRFID );
 			event.setText("RFID Match" );
+			trackRFID.nbFrameSinceLastRFIDReading = 0;
 			LiveMouseTracker.addEventLogToDataBase( new EventLog( "RFID MATCH" , animalWithDetection ) );
 			event.setColor( Color.green );
 
@@ -359,6 +361,7 @@ public class RFIDSolver2 {
 					animalOwningRFID, trackRFID.getFirstTimePoint() , trackRFID.getLastTimePoint() );
 			LiveMouseTracker.trackContainer.setTrackAnonymous( animalWithDetection , trackRFID );
 			LiveMouseTracker.trackContainer.setTrackIdentity( trackRFID, animalOwningRFID, "RFID" );
+			trackRFID.nbFrameSinceLastRFIDReading = 0;
 			LiveMouseTracker.addEventLogToDataBase( new EventLog( "RFID MISMATCH" , animalWithDetection ) );
 
 		}else

@@ -110,9 +110,8 @@ public class ResultListenerSocket2 implements Runnable, LiveTrackerListener {
 
 
 			} catch (IOException | InterruptedException e) {
-				// e.printStackTrace();
+				e.printStackTrace();
 				System.out.println("TCP sending error: client disconnected ?");
-
 			}
 		}
 

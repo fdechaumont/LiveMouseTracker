@@ -33,6 +33,7 @@ import plugins.fab.livemousetracker.DrawUtil;
 import plugins.fab.livemousetracker.LiveMouseTracker;
 import plugins.fab.livemousetracker.Util;
 import plugins.fab.livemousetracker.network.NetworkUtil;
+import plugins.fab.livemousetracker.overlay.Event;
 
 /**
  * Designed for uRFID_USB_PriorityDesign
@@ -128,14 +129,28 @@ public class RFIDAntenna extends Thread implements Antenna {
 			serial.readBytes( serial.getInputBufferBytesCount() , 10 );
 		} catch (SerialPortException e) {
 			//e.printStackTrace();
-			System.out.println("[Serial] Read error on port " + comPort );
+			System.out.println("[Serial t:"+LiveMouseTracker.getT()+"] Read error on port " + comPort );
 			faulty = true;
 		} catch (SerialPortTimeoutException e) {
 			// TimeOut sur lecture du port com.
-			System.out.println("[Serial] Time out on port " + comPort );
+			System.out.println("[Serial t:"+LiveMouseTracker.getT()+"] Time out on port " + comPort );
 		} catch ( NegativeArraySizeException e2 )
 		{
-			System.out.println("[Serial] Negative Arrray size exception.");
+			System.out.println("[Serial t:"+LiveMouseTracker.getT()+"] Negative Arrray size exception. " + comPort );
+			LiveMouseTracker.addEvent( new Event( "Faulty antenna step 1", Color.red, this.location ) );
+			
+			for ( int i = 0 ; i< 10 ; i++ )
+			{
+				switchOff();
+				try {
+					Thread.sleep( 10 ); // 70 // 10
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			LiveMouseTracker.addEvent( new Event( "Faulty antenna step 2", Color.red, this.location ) );
+			faulty = true;
+			
 		}
 		readData ="";
 	}
@@ -313,6 +328,7 @@ public class RFIDAntenna extends Thread implements Antenna {
 										id, this.location , ray, this );
 								fireRFIDEvent( event );
 								nbEvent++;
+								//LiveMouseTracker.addEvent( new Event( "Read", Color.green, this.location ) );
 							}
 						}
 						readData ="";
@@ -395,13 +411,13 @@ public class RFIDAntenna extends Thread implements Antenna {
 		g.setColor( Color.yellow );
 
 
-		DrawUtil.drawCenteredString( g, comPort, (int)location.getX(), (int)location.getY()-10 );
-		DrawUtil.drawCenteredString( g, ""+onOffstate, (int)location.getX(), (int)location.getY() );
+		DrawUtil.drawCenteredString( g, comPort.substring(3), (int)location.getX(), (int)location.getY()-10 );
+		//DrawUtil.drawCenteredString( g, ""+onOffstate, (int)location.getX(), (int)location.getY() );
 //		g.drawString( comPort + "/" + onOffstate, (int)location.getX(), (int)location.getY() );
 /*		g.drawString( "f:"+frequency, (int)location.getX(), (int)location.getY()+10 );
 		// try read / nb of event
 */
-		DrawUtil.drawCenteredString( g, ""+nbTryRead+"/" + nbEvent , (int)location.getX(), (int)location.getY()+10 );
+		DrawUtil.drawCenteredString( g, ""+nbTryRead+"/" + nbEvent , (int)location.getX(), (int)location.getY() );
 //		g.drawString( "r/e%: "+ (int)( 100d * nbEvent / nbTryRead ) , (int)location.getX(), (int)location.getY()+30 );
 		/*
 		Util.drawCenteredString( g, comPort, (int)location.getX(), (int)location.getY()-10 );

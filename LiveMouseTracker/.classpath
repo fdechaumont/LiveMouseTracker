@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="plugins/fab/livemousetracker/machinelearning/MachineLearningSetBuilderOldDictio.java|plugins/fab/livemousetracker/openfield/OpenFieldSingleRT.java|plugins/fab/livemousetracker/splitter/DetectionSplitter1.java|plugins/fab/livemousetracker/splitter/DetectionSplitter2.java|plugins/fab/livemousetracker/splitter/DetectionSplitter3.java|plugins/fab/aaa/voc/family/FamilyMaker.java" kind="src" path="src">
+	<classpathentry excluding="plugins/fab/livemousetracker/machinelearning/MachineLearningSetBuilderOldDictio.java|plugins/fab/livemousetracker/openfield/OpenFieldSingleRT.java|plugins/fab/livemousetracker/splitter/DetectionSplitter1.java|plugins/fab/livemousetracker/splitter/DetectionSplitter2.java|plugins/fab/livemousetracker/splitter/DetectionSplitter3.java|plugins/fab/aaa/voc/family/FamilyMaker.java|plugins/stef/azure/kinect/TestAzureKinectDriver.java|plugins/stef/azure/kinect/Rendering3Dv2.java|plugins/stef/azure/kinect/Rendering3Dvcopy.java" kind="src" path="src">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="LiveMouseTrackerSuite/lib/win64"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/KinectDriver"/>
 	<classpathentry kind="lib" path="WebcamCaptureLibraryPlugin.jar"/>
 	<classpathentry kind="lib" path="BridJLibraryPlugin.jar"/>
 	<classpathentry kind="lib" path="engine.io-client-1.0.0.jar"/>
@@ -20,6 +19,15 @@
 	<classpathentry kind="lib" path="jtransforms.jar"/>
 	<classpathentry kind="lib" path="flanagan.jar"/>
 	<classpathentry kind="lib" path="vecmath.jar"/>
+	<classpathentry kind="lib" path="javax.websocket-api-1.1.jar"/>
+	<classpathentry kind="lib" path="tyrus-standalone-client-1.9.jar"/>
+	<classpathentry kind="lib" path="j3dcore.jar"/>
+	<classpathentry kind="lib" path="j3dutils.jar"/>
+	<classpathentry kind="lib" path="sanselan-0.97-incubator.jar"/>
+	<classpathentry kind="lib" path="ufdw.jar"/>
+	<classpathentry kind="lib" path="jssc-2.9.2.jar"/>
+	<classpathentry kind="lib" path="sqlite-jdbc-3.8.11.2.jar"/>
+	<classpathentry kind="lib" path="javax.mail.jar"/>
 	<classpathentry kind="var" path="ICY_HOME/icy.jar"/>
 	<classpathentry kind="var" path="ICY_HOME/lib/xuggler.jar"/>
 	<classpathentry kind="output" path="bin"/>
