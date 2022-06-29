@@ -310,7 +310,7 @@ public class RFIDManager2 implements AntennaReadListener, AcceptListener {
 	 * Strategy: -
 	 * */
 	public void activateAntennas2() {
-
+		
 		Antenna antennaToActivate = null;
 		
 		// date tracks.
@@ -361,7 +361,7 @@ public class RFIDManager2 implements AntennaReadListener, AcceptListener {
 			allTrackSegments.remove( ts );
 		}
 		
-		if ( antennaToActivate == null )
+		if ( antennaToActivate == null || LiveMouseTracker.getTrackPoolOverlay().RFIDStopEventDisplayCounter > 0 )
 		{
 			disableAllAntennas();
 			return;

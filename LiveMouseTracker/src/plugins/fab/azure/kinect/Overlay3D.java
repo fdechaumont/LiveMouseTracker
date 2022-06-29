@@ -17,10 +17,10 @@ import plugins.kernel.roi.roi2d.ROI2DPolygon;
 
 public class Overlay3D extends Overlay {
 
-	Rendering3Dv3 renderer = null;
+	Rendering3Dv4 renderer = null;
 	int channelControl = 0;
 
-	public Overlay3D(Rendering3Dv3 renderer ) {
+	public Overlay3D(Rendering3Dv4 renderer ) {
 		super("Overlay3D");
 		this.renderer = renderer;
 		
@@ -52,28 +52,28 @@ public class Overlay3D extends Overlay {
 		}
 		if ( e.getKeyChar()==':' )
 		{
-			renderer.channelArray[channelControl].yRot-=1;
+			renderer.channelArray[channelControl].yRot-=0.5;
 			renderer.channelArray[channelControl].computeMatrix();
 			System.out.println("yRot : " + renderer.channelArray[channelControl].yRot );
 		}
 		
 		if ( e.getKeyChar()=='!' )
 		{
-			renderer.channelArray[channelControl].yRot+=1;
+			renderer.channelArray[channelControl].yRot+=0.5;
 			renderer.channelArray[channelControl].computeMatrix();
 			System.out.println("yRot : " + renderer.channelArray[channelControl].yRot );
 		}
 		
 		if ( e.getKeyChar()==',' )
 		{
-			renderer.channelArray[channelControl].xRot-=1;
+			renderer.channelArray[channelControl].xRot-=0.5;
 			renderer.channelArray[channelControl].computeMatrix();
 			System.out.println("xRot : " + renderer.channelArray[channelControl].xRot );
 		}
 		
 		if ( e.getKeyChar()==';' )
 		{
-			renderer.channelArray[channelControl].xRot+=1;
+			renderer.channelArray[channelControl].xRot+=0.5;
 			renderer.channelArray[channelControl].computeMatrix();
 			System.out.println("xRot : " + renderer.channelArray[channelControl].xRot );
 		}
@@ -183,12 +183,12 @@ public class Overlay3D extends Overlay {
 		}
 		if ( e.getKeyChar()=='g' )
 		{			
-			renderer.zClipClose+=10;
+			renderer.zClipClose+=1;
 			e.consume();
 		}
 		if ( e.getKeyChar()=='G' )
 		{
-			renderer.zClipClose-=10;
+			renderer.zClipClose-=1;
 			e.consume();
 		}
 		
@@ -250,7 +250,7 @@ public class Overlay3D extends Overlay {
     	g.drawString( "rotX/Y: "+ renderer.xRot + "/" + renderer.yRot, 10, yText );
     	yText+=fontSize;
     	g.setColor( Color.green );
-    	for ( Channel3D channel : renderer.channelArray )
+    	for ( Channel3Dv4 channel : renderer.channelArray )
     	{
     		if ( channel.enabled )
     		{

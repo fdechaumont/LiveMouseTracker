@@ -40,7 +40,7 @@ public final class Rendering3Dv3 {
 	//ArrayList<Point3f> pointList = new ArrayList<Point3f>();
 	Channel3D[] channelArray = new Channel3D[10];
 	float currentRotation = 1;
-	float scale = 0.6f;
+    float scale = 0.56f;
 	float xOffset=500;
 	float yOffset=500;
 	float xRot = 0;
@@ -60,8 +60,8 @@ public final class Rendering3Dv3 {
 	IcyBufferedImage depthImage = new IcyBufferedImage( width, height, 1, DataType.USHORT ); // short faster ?
 	float[] zBuffer= new float[width*height];
 	
-	Point3f mainTranslate = new Point3f( -404 , -490 , 0 );
-	
+    Point3f mainTranslate = new Point3f(-414, -410, 0);
+
 	Viewer viewer = null;
 	Sequence infraSequence= new Sequence( "3D infra");
 	Sequence depthSequence= new Sequence( "3D depth map");
@@ -99,21 +99,24 @@ public final class Rendering3Dv3 {
     	channelArray[1].color = Color.GREEN;
     	channelArray[2].color = Color.BLUE;
     	
-    	channelArray[0].translation = new Point3f( 0, 252 , 28 );
+    	//channelArray[0].translation = new Point3f( 0, 252 , 28 );
+    	channelArray[0].translation = new Point3f( -11, 138 , -41);
     	//channelArray[1].translation = new Point3f( -16, -279 , 23 ); // short distance config
-    	channelArray[1].translation = new Point3f( -11, -319 , -6 ); // short distance config
+    	channelArray[1].translation = new Point3f( -32, -392 , -37 ); // short distance config
     	
-    	channelArray[0].xRot= 13; // 17
-    	channelArray[0].yRot= 1;
+    	channelArray[0].xRot= (float) 8.5; // 17
+    	channelArray[0].yRot= 2;
     	channelArray[0].zRot= 0;
     	
-    	channelArray[1].xRot= -18; // -24
-    	channelArray[1].yRot= -2; // -2
+    	channelArray[1].xRot= -23; // -24
+    	channelArray[1].yRot= -3; // -2
     	channelArray[1].zRot= 180;
-    	
-    	channelArray[1].computeMatrix();
-    	
-    	channelArray[2].enabled = false;
+
+        channelArray[1].computeMatrix();
+
+        channelArray[0].enabled = true;
+        channelArray[1].enabled = true;
+        channelArray[2].enabled = false;
     	
     	//channelArray[1].translation = new Point3f( -362, -8 , 0 ); // long distance config
     	
@@ -153,7 +156,7 @@ public final class Rendering3Dv3 {
     	this.setFocusable( true );
     	*/
     	
-    	Overlay3D overlay3D = new Overlay3D( this );
+    	//Overlay3D overlay3D = new Overlay3D( this );
     	infraSequence.addOverlay( overlay3D );
     	depthSequence.addOverlay( overlay3D );
     	

@@ -15,11 +15,11 @@ import icy.math.FPSMeter;
 import icy.sequence.Sequence;
 import icy.type.DataType;
 
-public final class Rendering3DStef
+public final class Rendering3Dv4
 {
-    final Channel3DStef[] channelArray = new Channel3DStef[10];
+    final Channel3Dv4[] channelArray = new Channel3Dv4[10];
 
-    float scale = 0.6f;
+    float scale = 0.56f;
     float xOffset = 500;
     float yOffset = 500;
     float xRot = 0;
@@ -39,7 +39,7 @@ public final class Rendering3DStef
     short[] depthBuffer;
     float[] zBuffer = new float[width * height];
 
-    Point3f mainTranslate = new Point3f(-404, -490, 0);
+    Point3f mainTranslate = new Point3f(-414, -410, 0);
     Matrix4d matrix = new Matrix4d();
 
     Viewer viewer = null;
@@ -48,16 +48,16 @@ public final class Rendering3DStef
 
     Sequence depthSequenceRecorded = new Sequence("3D depth map recorded");
 
-    Overlay3DStef overlay3D = null;
+    Overlay3D overlay3D = null;
     FPSMeter fpsMeter = new FPSMeter();
 
     double renderTimeNs = 0;
     double renderTimeMs = 0;
     public int zClipFar = 1000;
-    public int zClipClose = 510;
+    public int zClipClose = 630;
     public int imageToRecord = 0;
 
-    public Rendering3DStef()
+    public Rendering3Dv4()
     {
         infraImage.setData(0, 0, 0, 4000);// for lut
         infraImage.setData(0, 1, 0, 0); // for lut
@@ -72,22 +72,25 @@ public final class Rendering3DStef
 
         for (int i = 0; i < channelArray.length; i++)
         {
-            channelArray[i] = new Channel3DStef(i);
+            channelArray[i] = new Channel3Dv4(i);
         }
-        channelArray[0].color = Color.BLACK;
-        channelArray[1].color = Color.GREEN;
-        channelArray[2].color = Color.BLUE;
 
-        channelArray[0].translation = new Point3f(0, 257, 0);
-        channelArray[1].translation = new Point3f(-16, -279, 23); // short distance config
-
-        channelArray[0].zRot = 0;
-        channelArray[0].yRot = 0;
-        channelArray[0].xRot = 17;
-
-        channelArray[1].zRot = 180;
-        channelArray[1].yRot = -4;
-        channelArray[1].xRot = -24;
+    	channelArray[0].color = Color.BLACK;
+    	channelArray[1].color = Color.GREEN;
+    	channelArray[2].color = Color.BLUE;
+    	
+    	//channelArray[0].translation = new Point3f( 0, 252 , 28 );
+    	channelArray[0].translation = new Point3f( -11, 138 , -41);
+    	//channelArray[1].translation = new Point3f( -16, -279 , 23 ); // short distance config
+    	channelArray[1].translation = new Point3f( -32, -392 , -53 ); // short distance config
+    	
+    	channelArray[0].xRot= (float) 8.5; // 17
+    	channelArray[0].yRot= 2;
+    	channelArray[0].zRot= 0;
+    	
+    	channelArray[1].xRot= -23; // -24
+    	channelArray[1].yRot= -3; // -2
+    	channelArray[1].zRot= 180;
 
         channelArray[1].computeMatrix();
 
@@ -95,7 +98,7 @@ public final class Rendering3DStef
         channelArray[1].enabled = true;
         channelArray[2].enabled = false;
 
-        overlay3D = new Overlay3DStef(this);
+        overlay3D = new Overlay3D(this);
 
         infraSequence.addOverlay(overlay3D);
         depthSequence.addOverlay(overlay3D);
@@ -137,13 +140,14 @@ public final class Rendering3DStef
 
         double meanZ = 0;
 
+        /*
         if (performCalibration)
         {
             
 
             float bestAngle = 0;
             double minSTD = Double.MAX_VALUE;
-            for (Channel3DStef channel : channelArray)
+            for (Channel3Dv4 channel : channelArray)
             {
                 for (float angle = -45; angle < 45; angle += 1)
                 {
@@ -167,17 +171,19 @@ public final class Rendering3DStef
             
             performCalibration = false;
         }
+        
 
         if (performAutoTranslate) // perform autoTranslation of the channel 1 ( 0 is not moving )
         {
             channelArray[1].performAutoTranslate(channelArray[0]);
         }
+        */
 
         meanZ = 561;
         // compute world matrix for once
         computeWorldMatrix(meanZ);
 
-        for (Channel3DStef channel : channelArray)
+        for (Channel3Dv4 channel : channelArray)
         {
             if (!channel.enabled)
             {
@@ -192,6 +198,7 @@ public final class Rendering3DStef
             
             boolean alternate = true;
 
+            /*
             if (alternate)
             {
                 computeWorldMatrix(meanZ);
@@ -217,12 +224,14 @@ public final class Rendering3DStef
                 }
             }
             else
+            */
             {
                 // do channel local points transformation
                 channel.convertToPoint();
                 channel.computeMatrix();
                 channel.transformPoints();
 
+                /*
                 // then do world points transformation
                 for (Point3f p : channel.point3dArray) // transform
                 {
@@ -235,10 +244,14 @@ public final class Rendering3DStef
                     else
                     {
                         // global transform
-                        matrix.transform(p);
                     }
+                }*/
+                for (Point3f p : channel.point3dArray)
+                {
+                        matrix.transform(p);
+                        p.z+=280; // to set it at 630 mm from the camera
                 }
-            }
+           }
 
             
 
@@ -247,10 +260,11 @@ public final class Rendering3DStef
             final int pointSize = 2;
             final Rectangle2D.Float bounds = new Rectangle2D.Float(0, 0, width - pointSize, height - pointSize);
 
-            for (int i = 0; i < channel.point3dArray.length; i += skipper)
+            for (int i = 0; i < channel.point3dArray.length; i ++ ) //= skipper)
             {
                 short val = channel.colorArray[i];
 
+                /*
                 if (val > 5000)
                 {
                     // val = 1;
@@ -260,9 +274,20 @@ public final class Rendering3DStef
                 {
                     val = 0;
                 }
+                */
 
                 final Point3f p = channel.point3dArray[i];
 
+                /*
+                if (p.z < zClipClose )
+                {
+                	p.z = 0; // set to out of view.
+                    p.x = -100000;
+                    p.y = 0;
+                }
+                */
+                
+                
                 // not in image bounds --> pass to next point
                 if (!bounds.contains(p.x, p.y))
                     continue;
@@ -293,6 +318,7 @@ public final class Rendering3DStef
         }
     }
 
+    /*
     private void drawPoint(Point3f pt, short val, int pointSize, int fusion)
     {
         final float z = pt.z;
@@ -332,14 +358,14 @@ public final class Rendering3DStef
                         break;
 
                     case 4: // maxZ
-                        /*
+                        
                          * if ( p.z > zBuffer[offset] ) // check z buffer or higher intensity
                          * {
                          * renderBuffer[offset] = (short)val;
                          * depthBuffer[offset] = (short)(p.z);
                          * zBuffer[offset] = p.z;
                          * }
-                         */
+                        
                         if (z > zBuffer[offset]) // check z buffer or higher intensity
                         {
                             if (val > renderBuffer[offset]) // keep brightest
@@ -359,6 +385,7 @@ public final class Rendering3DStef
             offset += width - pointSize;
         }
     }
+    */
 
     private void writePixel2x2(short[] buffer, short val, int offset, int width)
     {
@@ -398,8 +425,11 @@ public final class Rendering3DStef
             case 3: // maxI
                 if (val > renderBuffer[offset]) // check z buffer or higher intensity
                 {
+                	if ( z > zClipClose )
+                	{
                     writePixel2x2(renderBuffer, val, offset, w);
                     writePixel2x2(depthBuffer, (short) z, offset, w);
+                	}
                 }
                 break;
 
@@ -412,16 +442,52 @@ public final class Rendering3DStef
                  * zBuffer[offset] = p.z;
                  * }
                  */
-                if (z > zBuffer[offset]) // check z buffer or higher intensity
-                {
-                    if (val > renderBuffer[offset]) // keep brightest
-                    {
-                        writePixel2x2(renderBuffer, val, offset, w);
-                    }
+            	
+            	if ( val > 2000 )
+            	{
+            		break;
+            	}
+            	
+            	if (z > zBuffer[offset] )
+            	{
+            		writePixel2x2(depthBuffer, (short) z , offset, w);
+                	zBuffer[offset] = z;
+                	zBuffer[offset+1] = z;
+                	zBuffer[offset+w] = z;
+                	zBuffer[offset+w+1] = z;
+            	}
 
-                    writePixel2x2(depthBuffer, (short) z, offset, w);
-                    zBuffer[offset] = z;
+            	if (val > renderBuffer[offset])
+            	{
+            		writePixel2x2(renderBuffer, val, offset, w);
+            	}
+            	
+//            	if (val > renderBuffer[offset]) 
+//            	{
+//                	writePixel2x2(renderBuffer, val, offset, w);
+//                	//writePixel2x2(renderBuffer, (short)(renderBuffer[offset]+1), offset, w);
+//                	writePixel2x2(depthBuffer, (short) z , offset, w);
+//            		
+//            	}
+            		/*
+            	if (z > zBuffer[offset] ) // check z buffer or higher intensity
+                {
+//                    if (val > renderBuffer[offset]) // keep brightest
+//                    {
+//                    }
+                    if ( z > zClipClose )
+                    {
+                    	writePixel2x2(renderBuffer, val, offset, w);
+                    	//writePixel2x2(renderBuffer, (short)(renderBuffer[offset]+1), offset, w);
+                    	writePixel2x2(depthBuffer, (short) z , offset, w);
+                    	zBuffer[offset] = z;
+//                    	zBuffer[offset+1] = z;
+//                    	zBuffer[offset+w] = z;
+//                    	zBuffer[offset+w+1] = z;
+                    }
                 }
+                */
+                
                 break;
         }
     }

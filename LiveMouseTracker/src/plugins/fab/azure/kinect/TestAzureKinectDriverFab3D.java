@@ -56,11 +56,11 @@ public class TestAzureKinectDriverFab3D extends PluginActionable implements Data
 
     }
     
-    Rendering3Dv3 rendering3D = null;
+    Rendering3Dv4 rendering3D = null;
     
     public void init()
     {
-    	rendering3D = new Rendering3Dv3();
+    	rendering3D = new Rendering3Dv4();
     	
         receivedDatasets.clear();
         stopped = false;

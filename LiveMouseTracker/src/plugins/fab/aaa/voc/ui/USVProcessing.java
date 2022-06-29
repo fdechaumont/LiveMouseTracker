@@ -39,7 +39,7 @@ public class USVProcessing extends PluginActionable implements PluginThreaded, A
 
 	ArrayList<File> fileToProcess = new ArrayList<>();
 	boolean processing = false;
-
+	int maxNumberOfThread = 8;
 
 	@Override
 	public void run() {
@@ -105,9 +105,21 @@ public class USVProcessing extends PluginActionable implements PluginThreaded, A
 		allResultsFile.delete();
 
 		ExecutorService threadPool = ThreadUtil.createThreadPool( "Processing USVs");
+				
+		// max thread
+		String optionString = guiPanel.getOptionField().getText();
+		String[] optionArray = optionString.split(" ");
+		for ( int i = 0 ; i < optionArray.length ; i++ ) 
+		{
+			if ( optionArray[i].equals("-maxThread") )
+			{
+				int maxThread = Integer.parseInt( optionArray[i+1] );
+				System.out.println("Setting max number of thread to: " + maxThread );
+				maxNumberOfThread = maxThread;
+			}
+		}
 		
-		
-		processor = new Processor( 200000, 10, Processor.NORM_PRIORITY );
+		processor = new Processor( 200000, maxNumberOfThread, Processor.NORM_PRIORITY );
 		
 		System.out.println("Loading pre processors...");
 		
@@ -177,7 +189,6 @@ public class USVProcessing extends PluginActionable implements PluginThreaded, A
 			log("PUP MODE activated");
 		}
 
-
 		
 		// options
 		String optionString = guiPanel.getOptionField().getText();
@@ -208,6 +219,8 @@ public class USVProcessing extends PluginActionable implements PluginThreaded, A
 				processor.detectionThreshold = detectionThreshold;
 			}
 		}
+
+		
 		
 		
 		processor.setCloseAfterProcessing( true );
@@ -242,7 +255,10 @@ public class USVProcessing extends PluginActionable implements PluginThreaded, A
 		}
 
 		System.out.println("--------------- DONE");
-
+		processing= false;
+		
+		updateUI();
+		
 	}
 
 	private void updateUI() {

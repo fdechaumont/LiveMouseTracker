@@ -161,7 +161,7 @@ public class TrackIdentityGlobalSolver {
 
 			//		Event event = new Event( "Asso: " + (int)proportion, Color.PINK, new Point2D.Double( 500/2,424/3 ) );
 			//		event.setCanRemove( true );
-			//		LiveMouseTracker.addEvent( event );
+			//		LiveMouseTracker. event );
 
 //			for ( TrackIdentityProblem tip : trackIdentityProblemList )
 //			{

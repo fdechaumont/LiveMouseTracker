@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="LiveMouseTracker/src"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/BridJLibraryPlugin.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/engine.io-client-1.0.0.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/flanagan.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/j3dcore.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/j3dutils.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/javax.mail.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/javax.websocket-api-1.1.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/jSerialComm-2.3.0.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/json-20090211.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/jssc-2.9.2.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/jtransforms.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/miglayout15-swing.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/musicg-1.4.2.0.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/musicg-graphic-1.3.0.0.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/okhttp-3.8.1.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/okio-1.13.0.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/org.eclipse.paho.client.mqttv3-1.0.2.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/sanselan-0.97-incubator.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/SimpleDynamixel.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/socket.io-client-1.0.0.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/sqlite-jdbc-3.8.11.2.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/TarsosDSP-2.3.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/tyrus-standalone-client-1.9.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/ufdw.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/vecmath.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/WebcamCaptureLibraryPlugin.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/weka.jar"/>
+	<classpathentry kind="lib" path="LiveMouseTracker/xuggler.jar"/>
+	<classpathentry kind="output" path="LiveMouseTracker/bin"/>
+</classpath>

@@ -9,7 +9,7 @@ import javax.vecmath.Matrix4d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
-public class Channel3DStef
+public class Channel3Dv4
 {
     ReentrantLock lock = new ReentrantLock();
 
@@ -30,7 +30,7 @@ public class Channel3DStef
 
     public int number;
 
-    public Channel3DStef(int number)
+    public Channel3Dv4(int number)
     {
         this.number = number;
         this.computeMatrix();
@@ -199,19 +199,19 @@ public class Channel3DStef
         return resultList;
     }
 
-    public void performAutoTranslate(Channel3DStef channel3d)
+    public void performAutoTranslate(Channel3Dv4 channel3d)
     {
 
         // pick the lower (higher in scene) z pixels to register
 
-        Channel3DStef refChannel = channel3d;
+        Channel3Dv4 refChannel = channel3d;
         refChannel.computeMatrix();
         refChannel.convertToPoint();
         refChannel.transformPoints();
         // refChannel.translatePoints();
         List<Point3f> refPointList = refChannel.getHigherPoints(100);
 
-        Channel3DStef movingChannel = this;
+        Channel3Dv4 movingChannel = this;
         movingChannel.computeMatrix();
         movingChannel.convertToPoint();
         movingChannel.transformPoints();

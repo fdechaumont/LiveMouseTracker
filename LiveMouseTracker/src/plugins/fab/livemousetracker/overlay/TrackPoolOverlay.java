@@ -349,7 +349,26 @@ public class TrackPoolOverlay extends Overlay {
 						canvas.getWidth()/2, canvas.getHeight()-80, bgColor , Color.orange);
 				aviSoftInfoDisplayCounter--;
 			}
+			
+			if( UDPEventInfoStringDisplayCounter > 0 )
+			{
+				drawCenteredHint(gAbsolute,
+						"UDP Event:"+UDPEventInfoString,
+						canvas.getWidth()/2, canvas.getHeight()-80, bgColor , Color.yellow);
+				UDPEventInfoStringDisplayCounter--;
+			}
+			
+			if( RFIDStopEventDisplayCounter > 0 )
+			{
+				drawCenteredHint(gAbsolute,
+						"RFID STOPPED: "+RFIDStopEventInfoString,
+						canvas.getWidth()/2, canvas.getHeight()-100, bgColor , Color.red);
+				RFIDStopEventDisplayCounter--;
+			}
 
+
+			
+			
 			if( LiveMouseTracker.LOCK_BACKGROUND )
 			{
 				drawCenteredHint(gAbsolute,
@@ -899,6 +918,26 @@ public class TrackPoolOverlay extends Overlay {
 	{
 		aviSoftInfoDisplayCounter = 30;
 		this.aviSoftInfoString = aviSoftInfoString;
+	}
+	
+	String UDPEventInfoString = "";
+	/** If the counter is <= 0, don't display */
+	int UDPEventInfoStringDisplayCounter = 0;
+
+	public void setUDPEventInfoString( String UDPEventInfoString )
+	{
+		UDPEventInfoStringDisplayCounter = 30;
+		this.UDPEventInfoString = UDPEventInfoString;
+	}
+	
+	String RFIDStopEventInfoString = "";
+	/** If the counter is <= 0, don't display - RFID is locked if value > 0 */
+	public int RFIDStopEventDisplayCounter = 0;
+
+	public void setRFIDStopEventInfoString( String RFIDStopEventInfoString )
+	{
+		RFIDStopEventDisplayCounter = 30;
+		this.RFIDStopEventInfoString = RFIDStopEventInfoString;
 	}
 
 	private void drawRFIDAntenna( Graphics2D g ) {
