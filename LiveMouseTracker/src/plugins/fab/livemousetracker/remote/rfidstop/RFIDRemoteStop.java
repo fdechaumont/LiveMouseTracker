@@ -54,7 +54,8 @@ public class RFIDRemoteStop extends Thread {
 				String sentence = "";
 				serverSocket.receive(receivePacket);
 				sentence = new String( receivePacket.getData(), receivePacket.getOffset(), receivePacket.getLength());
-				if ( receivePacket.getAddress().isAnyLocalAddress() )
+				
+				if ( receivePacket.getAddress().toString().contains("127.0.0.1") )
 				{
 					System.out.println( "UDP RFID STOP server: string received: " + sentence );				
 					{					

@@ -70,6 +70,7 @@ import icy.type.collection.array.Array1DUtil;
 import icy.type.point.Point3D;
 import loci.formats.FormatException;
 import plugins.fab.azure.kinect.TestAzureKinectDriverFab3D;
+import plugins.fab.azure.kinect.TestAzureKinectDriverFabMultiDoubleCam;
 import plugins.fab.kinectdriver.KinectData;
 import plugins.fab.kinectdriver.KinectEvent;
 import plugins.fab.kinectdriver.KinectListener;
@@ -103,6 +104,7 @@ import plugins.fab.livemousetracker.machinelearning.MachineLearningSubPartBuilde
 import plugins.fab.livemousetracker.machinelearning.MachineLearningTrackIdentity;
 import plugins.fab.livemousetracker.machinelearning.MachineLearningTrackIdentityThread;
 import plugins.fab.livemousetracker.misc.Clock;
+import plugins.fab.livemousetracker.morpho.MorphoROITools;
 import plugins.fab.livemousetracker.overlay.AbsoluteHint;
 import plugins.fab.livemousetracker.overlay.DebugOverlay;
 import plugins.fab.livemousetracker.overlay.Event;
@@ -111,6 +113,8 @@ import plugins.fab.livemousetracker.overlay.PerfLoggerOverlay;
 import plugins.fab.livemousetracker.overlay.ThreadMonitorOverlay;
 import plugins.fab.livemousetracker.overlay.TrackPoolOverlay;
 import plugins.fab.livemousetracker.perf.PerformanceMonitor;
+import plugins.fab.livemousetracker.remote.event.UDPEventReceiver;
+import plugins.fab.livemousetracker.remote.rfidstop.RFIDRemoteStop;
 // UNRELEASED MULTI
 import plugins.fab.livemousetracker.remotearena.server.LMTRemoteAreaServer;
 import plugins.fab.livemousetracker.remotearena.server.RegisteredArenaClient;
@@ -137,7 +141,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	String version = "2022 PREVIEW";
 	/** Warning: This depth sequence is the one from the kinect, It's not a Z-corrected version. Use LiveMouseTracker.depthImage instead */
-	public static final boolean DISPLAY_DEPTH_SEQUENCE = false;
+	public static final boolean DISPLAY_DEPTH_SEQUENCE = true;
 	public static final boolean DISPLAY_DIF_INFRA_SEQUENCE = false;
 	public static final boolean DISPLAY_DIF_DEPTH_SEQUENCE = false;
 	public static final boolean DISPLAY_TAIL_SEQUENCE = false;
@@ -225,7 +229,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	// Option that are or will be integrated in the LiveKinect Driver part
 
 	// Public static final boolean FLIP_X_INPUT_ENABLED = true;
-	public static boolean COMPENSATE_Z_WITH_INTENSITY_ENABLED = true;
+	public static boolean COMPENSATE_Z_WITH_INTENSITY_ENABLED = false;
 	public static boolean TRACKING_ENABLED = true;
 
 	/** This value cannot change along time as inits will not be performed*/
@@ -254,7 +258,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	// detection
 
-	public static int DEPTH_SENSITIVITY = 14;
+	public static int DEPTH_SENSITIVITY = 5;
 	/** If the detection contain more pixel than the MAX_SIZE_CANDIDATE, the detection is said "too big" to be a detection
 	 * and the system will try to split it.Should be learned. Should be smart to de activate if no mouse is missing,
 	 * and to activate if a mouse is too big and mice are missing.
@@ -300,7 +304,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static boolean DRAW_ANONYMOUS_TRACKS = false;
 
 	public static float HEAD_ML_SWAP_THRESHOLD = 0.8f; //0.38f;
-	private static boolean DISPLAY_LOG_IN_CONSOLE = false;
+	private static boolean DISPLAY_LOG_IN_CONSOLE = true;
 	public static boolean MODE_TEST_ANTENNA = false;
 	public static boolean BREAK_TRACK_CONTINUITY_AFTER_ANIMAL_CONTACT = false;
 
@@ -324,8 +328,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	static int lastMainThreadComputationTimeMs = 0;
 	private boolean pauseAllProcess = false;
 
-	public static ROI2DPolygon ROICage = null;
-	public static ROI2DPolygon ROICageFloor = null;
+//	public static ROI2DArea ROICage = null;
+//	public static ROI2DArea ROICageFloor = null;
 
 	public static int getLastMainThreadComputationTimeMs() {
 		return lastMainThreadComputationTimeMs;
@@ -411,7 +415,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		return thermalSequence;
 	}
 
-
+	RFIDRemoteStop rfidRemoteStop;
+	UDPEventReceiver udpEventReceiver;
 
 	/** images coming from local setup */
 	ArrayList<ImageKinect> imageQueueList = new ArrayList<ImageKinect>();
@@ -421,15 +426,15 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	static public PerfLoggerOverlay perfLogger = null;
 
-	public enum CAGE_MODE { CLASSIC_16, RATS_25, SUPER_BLOCKS }
+	public enum CAGE_MODE { MULTI_CLASSIC_16, CLASSIC_16, RATS_25, SUPER_BLOCKS }
 
 	//boolean rat_mode = false;
 	//public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
-	public static CAGE_MODE cageMode = CAGE_MODE.SUPER_BLOCKS;
+	public static CAGE_MODE cageMode = CAGE_MODE.MULTI_CLASSIC_16;
 
-	static KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
-	//TestAzureKinectDriverFab3D kinectStreamer = new TestAzureKinectDriverFab3D();
+	//static KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
+	TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam();
 
 	
 	public enum CRITICAL_LOOP_STEP
@@ -600,6 +605,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		System.out.println("Starting Live Mouse Tracker version " + version );
 		new SerialDriverPlugin();
 
+		/*
+		 * PUTBACK
 		if ( !checkIfLMTHasBeenLaunchedWithTheBatchFile() )
 		{
 			JOptionPane.showMessageDialog(null,
@@ -611,6 +618,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		    "\ndon't forget to uninstall java 32 bits before installing the 64 bits version." );
 			return;
 		}
+		*/
 
 
 		plugin = this;
@@ -864,6 +872,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				{
 
 					infraOut.setImage( 0 , 0, infraImage );
+					depthOut.setImage( 0 , 0, depthImage );
 
 
 					if (!lutInfraDone && (infraOut.getFirstViewer() != null))
@@ -871,10 +880,18 @@ implements KinectListener, ActionListener, IcyFrameListener {
 						if ( cageMode == CAGE_MODE.RATS_25 )
 						{
 							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 12750 );
-						}else
+						}
+						
+						if ( cageMode == CAGE_MODE.CLASSIC_16 )
 						{
 							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
 						}
+						
+						if ( cageMode == CAGE_MODE.MULTI_CLASSIC_16 )
+						{
+							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 5000 );
+						}
+						
 						//infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
 						lutInfraDone = true;
 					}
@@ -1408,6 +1425,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			trackPoolOverlay.decreaseLooseTrackCounter();
 		}
 
+		trackPoolOverlay.frameTick();
 
 		// filter detection
 		//chrono.displayMs();
@@ -1416,17 +1434,17 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		// reject very big detection (after split) that can occur when nest is tracked/melt with animals
 		// or when the kinect is having problem
-		for ( MouseDetection rawDetection : rawMouseDetectionList )
-		{
-			if ( rawDetection.getBooleanMask().bounds.getWidth() > 150
-					|| rawDetection.getBooleanMask().bounds.getHeight() > 150
-					)
-			{
-				System.out.println("[TOO BIG DETECTION (after split) WARNING]: Too large detection found. Reset background");
-				LiveMouseTracker.resetBackGround();
-				break;
-			}
-		}
+//		for ( MouseDetection rawDetection : rawMouseDetectionList )
+//		{
+//			if ( rawDetection.getBooleanMask().bounds.getWidth() > 150
+//					|| rawDetection.getBooleanMask().bounds.getHeight() > 150
+//					)
+//			{
+//				System.out.println("[TOO BIG DETECTION (after split) WARNING]: Too large detection found. Reset background");
+//				LiveMouseTracker.resetBackGround();
+//				break;
+//			}
+//		}
 		
 		// reject reflexion detection
 		//cage
@@ -3009,9 +3027,9 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	 */
 	private void setupDisplayLUTViewers() {
 
-		try{
-		depthOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 600, 800 );
-		} catch( NullPointerException e ){};
+//		try{
+//		depthOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 600, 800 );
+//		} catch( NullPointerException e ){};
 
 		try{
 		backgroundSequence.getFirstViewer().getLut().getLutChannel(0).setMinMax( 600, 800 );
@@ -3025,9 +3043,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		difInfraInTimeSequence.getFirstViewer().getLut().getLutChannel(0).setMinMax( -20, 20 );
 		} catch( NullPointerException e ){};
 
-		try{
-			// FIXME STEF: mettre une lut pré calculée.
-			infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
+		try{			
+			infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 5000 );
 		} catch( NullPointerException e ){};
 
 		try{
@@ -3049,10 +3066,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		if ( kinectEvent == KinectEvent.NEW_DEPTH_SEQUENCE )
 		{
 			depthOutLocal = sourceSequence;
-//			if ( DISPLAY_DEPTH_SEQUENCE )
-//			{
-//				addSequence( depthOut );
-//			}
+			if ( DISPLAY_DEPTH_SEQUENCE )
+			{
+				addSequence( depthOut );
+			}
 			System.out.println("Depth sequence registered.");
 			tryToInit();
 		}
@@ -3404,16 +3421,78 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		this.ROICageFloor = roiCage50x50Floor;
 		updateAllROICage();
  */
-		
+	
+		if ( cageMode == CAGE_MODE.MULTI_CLASSIC_16 )
+		{
+			int shiftX = 512;
+			
+
+			ROI2DPolygon roiCage50x50_A = new ROI2DPolygon( new Point2D.Double( 86-5+3 +30, 55-5-17 +30 ) );
+			roiCage50x50_A.addNewPoint( new Point2D.Double( 420+5+3 -30 , 55-5 -17 +30 ), false);
+			roiCage50x50_A.addNewPoint( new Point2D.Double( 420+5+3 -30 , 395+5 -17 -30 ), false);
+			roiCage50x50_A.addNewPoint( new Point2D.Double(  86-5+3 +30 , 395+5 -17 -30 ), false);
+			roiCage50x50_A.setCreating( false );
+						
+			ROI2DPolygon roiCage50x50_B = new ROI2DPolygon( new Point2D.Double( shiftX+86-5+3 +30, 55-5-17 +30 ) );
+			roiCage50x50_B.addNewPoint( new Point2D.Double( shiftX+420+5+3 -30 , 55-5 -17 +30 ), false);
+			roiCage50x50_B.addNewPoint( new Point2D.Double( shiftX+420+5+3 -30 , 395+5 -17 -30 ), false);
+			roiCage50x50_B.addNewPoint( new Point2D.Double(  shiftX+86-5+3 +30 , 395+5 -17 -30 ), false);
+			roiCage50x50_B.setCreating( false );
+
+			ROI2DRectangle roiGate_A = new ROI2DRectangle( 420+5+3 -30 , 118+15 , shiftX+86-5+3 +30, 118+5+20 );
+			ROI2DRectangle roiGate_B = new ROI2DRectangle( 420+5+3 -30 , 267+15 , shiftX+86-5+3 +30, 267+5+20 );
+			
+			kinectStreamer.setSequenceForOverlay( infraOut );
+			
+			ArrayList<ROI2D> cageFloorROIList = new ArrayList<ROI2D>();
+			
+			cageFloorROIList.add( roiCage50x50_A );
+			cageFloorROIList.add( roiCage50x50_B );
+			
+//			cageFloorROIList.add( roiGate_A );
+//			cageFloorROIList.add( roiGate_B );
+			
+			setROICageFloor( cageFloorROIList );
+			
+
+			ROI2DArea roiCage = new ROI2DArea( cageFloorMask );
+			int dilatation = 10;
+			System.out.println("Dilatation of floor (nb pixels): " + dilatation );
+			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
+			roiCage= MorphoROITools.dilateROI( roiCage , dilatation, dilatation , 1 );			
+			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
+			roiCage.optimizeBounds();
+			
+//			Sequence testSequence = new Sequence();
+//			Icy.getMainInterface().addSequence( testSequence );
+//			testSequence.addROI( roiCage );
+//			roiCage.setEditable( true );
+			
+			ArrayList<ROI2D> roiCageList = new ArrayList<ROI2D>();
+			roiCageList.add( roiCage );			
+			setROICage( roiCageList );
+			
+			//setROICage( cageFloorROIList );
+			
+			
+//			ROI2DRectangle roi = new ROI2DRectangle(  new Point2D.Double( 186 , 153 ), new Point2D.Double( 189 , 216 ) ); 
+//			roiCage50x50 = ROIUtil.getSubtraction( roiCage50x50, roi );
+			
+
+			
+			//updateAllROICage();
+
+		}
+		/*
 		if ( cageMode == CAGE_MODE.SUPER_BLOCKS )
 		{
-			/*
-			ROI2DPolygon roiCage50x50 = new ROI2DPolygon( new Point2D.Double( 65,97 ) );
-			roiCage50x50.addNewPoint( new Point2D.Double( 433, 101), false);
-			roiCage50x50.addNewPoint( new Point2D.Double( 432, 349), false);
-			roiCage50x50.addNewPoint( new Point2D.Double(  60, 346), false);
-			roiCage50x50.setCreating( false );
-			*/
+			
+//			ROI2DPolygon roiCage50x50 = new ROI2DPolygon( new Point2D.Double( 65,97 ) );
+//			roiCage50x50.addNewPoint( new Point2D.Double( 433, 101), false);
+//			roiCage50x50.addNewPoint( new Point2D.Double( 432, 349), false);
+//			roiCage50x50.addNewPoint( new Point2D.Double(  60, 346), false);
+//			roiCage50x50.setCreating( false );
+//			
 			
 			// copy of background to avoid walls reflextions
 			ROI2DPolygon roiCage50x50 = new ROI2DPolygon( new Point2D.Double( 76-1,98-1 ) );
@@ -3437,7 +3516,9 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 			updateAllROICage();
 			
-		}else
+		}
+		
+		if ( cageMode == CAGE_MODE.CLASSIC_16 || cageMode == CAGE_MODE.RATS_25 )
 		{
 			ROI2DPolygon roiCage50x50 = new ROI2DPolygon( new Point2D.Double( 86-5+3, 55-5-17 ) );
 			roiCage50x50.addNewPoint( new Point2D.Double( 420+5+3, 55-5 -17), false);
@@ -3457,7 +3538,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 			updateAllROICage();
 		}
-
+		*/
 
 		debugOverlay = new DebugOverlay("debug live tracking");
 		depthOut.addOverlay( debugOverlay );
@@ -3671,6 +3752,54 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  336 ) , 30 , "COM44" ) ); // 15
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  336 ) , 30 , "COM45" ) ); // 18
 			}
+			
+			
+			if ( cageMode == CAGE_MODE.MULTI_CLASSIC_16 )
+			{
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,   81 ) , 30 , "COM30" ) ); // 23
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,   81 ) , 30 , "COM31" ) ); // 25
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,   81 ) , 30 , "COM32" ) ); // 13
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,   81 ) , 30 , "COM33" ) ); // 12
+
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  166 ) , 30 , "COM34" ) ); // 24
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  166 ) , 30 , "COM35" ) ); // 26
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  166 ) , 30 , "COM36" ) ); // 17
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  166 ) , 30 , "COM37" ) ); // 11
+
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  249 ) , 30 , "COM38" ) ); // 20
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  249 ) , 30 , "COM39" ) ); // 19
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  249 ) , 30 , "COM40" ) ); // 16
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  249 ) , 30 , "COM41" ) ); // 14
+
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  336 ) , 30 , "COM42" ) ); // 21
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  336 ) , 30 , "COM43" ) ); // 22
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  336 ) , 30 , "COM44" ) ); // 15
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  336 ) , 30 , "COM45" ) ); // 18
+				
+				int shiftX = 512;
+				
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133+shiftX,   81 ) , 30 , "COM50" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214+shiftX,   81 ) , 30 , "COM51" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296+shiftX,   81 ) , 30 , "COM52" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378+shiftX,   81 ) , 30 , "COM53" ) ); 
+
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133+shiftX,  166 ) , 30 , "COM54" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214+shiftX,  166 ) , 30 , "COM55" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296+shiftX,  166 ) , 30 , "COM56" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378+shiftX,  166 ) , 30 , "COM57" ) ); 
+
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133+shiftX,  249 ) , 30 , "COM58" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214+shiftX,  249 ) , 30 , "COM59" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296+shiftX,  249 ) , 30 , "COM60" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378+shiftX,  249 ) , 30 , "COM61" ) ); 
+
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133+shiftX,  336 ) , 30 , "COM62" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214+shiftX,  336 ) , 30 , "COM63" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296+shiftX,  336 ) , 30 , "COM64" ) ); 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378+shiftX,  336 ) , 30 , "COM65" ) ); 
+
+				
+			}
 
 			/*
 			 * Rat cage.
@@ -3736,6 +3865,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			networkResultServerThread.start();
 		}
 
+		{
+			rfidRemoteStop = new RFIDRemoteStop();
+			udpEventReceiver = new UDPEventReceiver();
+		}
+		
 		// UNRELEASED MULTI
 
 		if ( guiPanel.getCheckBoxMultiArenaMode().isSelected() )
@@ -3965,6 +4099,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	public static void updateAllROICage()
 	{
+		/*
 		{
 			ArrayList<ROI2D> roiCageList = new ArrayList<ROI2D>();
 			roiCageList.add( ROICage );
@@ -3996,6 +4131,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 			setROICageFloor( roiCageFloorList );
 		}
+		*/
 
 	}
 
@@ -4012,6 +4148,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		{
 			roiFloor.setColor( Color.orange.darker() );
 			roiFloor.setName( "cage floor limits" );
+			roiFloor.setOpacity( 0 );
 			infraOut.addROI( roiFloor );
 			depthOut.addROI( roiFloor );
 			System.out.println( "adding roi cage floor: " + roiFloor );
@@ -4091,6 +4228,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		{
 			roiCage.setColor( Color.orange );
 			roiCage.setName( "cage limits" );
+			roiCage.setOpacity( 0 );
 			infraOut.addROI( roiCage );
 			depthOut.addROI( roiCage );
 
@@ -4100,6 +4238,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			mergedBooleanMask.add( roiCage.getBooleanMask( true ));
 		}
 
+		
 //		cageROI = roiCage;
 		cageROIMask = mergedBooleanMask;
 

@@ -56,6 +56,7 @@ public class TestAzureKinectDriverFab extends PluginActionable implements Plugin
 //        Icy.getMainInterface().addSequence(color);
         Icy.getMainInterface().addSequence(depth1);
         Icy.getMainInterface().addSequence(depth2);
+        
 //        Icy.getMainInterface().addSequence(strechedDepth);
 //        Icy.getMainInterface().addSequence(cloudDepth);
     }

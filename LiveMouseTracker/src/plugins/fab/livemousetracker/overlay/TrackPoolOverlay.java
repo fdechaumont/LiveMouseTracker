@@ -347,7 +347,6 @@ public class TrackPoolOverlay extends Overlay {
 				drawCenteredHint(gAbsolute,
 						"aviSoft:"+aviSoftInfoString,
 						canvas.getWidth()/2, canvas.getHeight()-80, bgColor , Color.orange);
-				aviSoftInfoDisplayCounter--;
 			}
 			
 			if( UDPEventInfoStringDisplayCounter > 0 )
@@ -355,7 +354,6 @@ public class TrackPoolOverlay extends Overlay {
 				drawCenteredHint(gAbsolute,
 						"UDP Event:"+UDPEventInfoString,
 						canvas.getWidth()/2, canvas.getHeight()-80, bgColor , Color.yellow);
-				UDPEventInfoStringDisplayCounter--;
 			}
 			
 			if( RFIDStopEventDisplayCounter > 0 )
@@ -363,7 +361,6 @@ public class TrackPoolOverlay extends Overlay {
 				drawCenteredHint(gAbsolute,
 						"RFID STOPPED: "+RFIDStopEventInfoString,
 						canvas.getWidth()/2, canvas.getHeight()-100, bgColor , Color.red);
-				RFIDStopEventDisplayCounter--;
 			}
 
 
@@ -938,6 +935,22 @@ public class TrackPoolOverlay extends Overlay {
 	{
 		RFIDStopEventDisplayCounter = 30;
 		this.RFIDStopEventInfoString = RFIDStopEventInfoString;
+	}
+	
+	public void frameTick() // called at each frame
+	{
+		if ( aviSoftInfoDisplayCounter > 0 )
+		{
+			aviSoftInfoDisplayCounter--;
+		}
+		if ( UDPEventInfoStringDisplayCounter > 0 )
+		{
+			UDPEventInfoStringDisplayCounter--;
+		}
+		if ( RFIDStopEventDisplayCounter > 0 )
+		{			
+			RFIDStopEventDisplayCounter--;
+		}
 	}
 
 	private void drawRFIDAntenna( Graphics2D g ) {

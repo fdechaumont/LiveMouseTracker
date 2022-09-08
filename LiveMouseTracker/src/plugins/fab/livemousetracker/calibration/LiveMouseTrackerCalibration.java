@@ -19,6 +19,7 @@ package plugins.fab.livemousetracker.calibration;
 
 import java.awt.geom.Point2D;
 
+import plugins.fab.azure.kinect.TestAzureKinectDriverFabMultiDoubleCam;
 import plugins.fab.kinectdriver.KinectData;
 import plugins.fab.kinectdriver.KinectEvent;
 import plugins.fab.kinectdriver.KinectListener;
@@ -44,7 +45,8 @@ public class LiveMouseTrackerCalibration extends PluginActionable implements Kin
 	public static IcyBufferedImage infraImage;
 	public static IcyBufferedImage depthImage;
 	CalibrationPainter calibrationPainter = new CalibrationPainter();
-	KinectStreamer kinectStreamer = new KinectStreamer( false );
+	//KinectStreamer kinectStreamer = new KinectStreamer( false );
+	TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam();
 
 	@Override
 	public void run() {
@@ -79,6 +81,7 @@ public class LiveMouseTrackerCalibration extends PluginActionable implements Kin
 			addSequence ( infraOutCorrected );
 			infraOutCorrected.setName("Infra corrected");
 			infraOutCorrected.addOverlay( calibrationPainter );
+			kinectStreamer.setSequenceForOverlay( infraOutCorrected );
 
 			//addCageROI( infraOutCorrected );
 			//addSequence( infraOutOriginal );
@@ -162,6 +165,7 @@ public class LiveMouseTrackerCalibration extends PluginActionable implements Kin
 	private void setupDisplayLUTViewers() {
 
 		// FIXME: PUT IT BACK.
+		/*
 		try{
 		depthOutCorrected.getFirstViewer().getLut().getLutChannel(0).setMinMax( 600, 800 );
 		} catch( NullPointerException e ){};
@@ -169,6 +173,7 @@ public class LiveMouseTrackerCalibration extends PluginActionable implements Kin
 		try{
 		infraOutCorrected.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
 		} catch( NullPointerException e ){};
+		*/
 
 	}
 

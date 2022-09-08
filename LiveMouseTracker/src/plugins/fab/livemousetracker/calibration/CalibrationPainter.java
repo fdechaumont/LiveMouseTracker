@@ -69,16 +69,26 @@ public class CalibrationPainter extends Overlay {
 
 		// vertical
 		g.drawLine( midX, 0, midX, sequence.getHeight() );
+		g.drawLine( midX/2, 0, midX/2, sequence.getHeight() );
+		g.drawLine( 3*midX/2, 0, 3*midX/2, sequence.getHeight() );
 		// horizontal
 		g.drawLine( 0, midY , sequence.getWidth(), midY );
+		g.drawLine( 0, midY/2 , sequence.getWidth(), midY/2 );
+		g.drawLine( 0, 3*midY/2 , sequence.getWidth(), 3*midY/2 );
 
 		switch ( setup )
 		{
 		case Cage_50x50cm:
 			// quad 50x50cm
-			g.drawString( "50x50cm ground cage limits.", 112, 65 );
+			g.drawString( "50x50cm ground cage limits CAMERA 1.", 112, 65 );
 			//g.drawRect( 112, 70, sequence.getWidth()-112*2, sequence.getHeight() -70*2 );
 			g.drawRect( 114, 63, 398-114, 353-63 );
+			
+			int xOffset=512;
+			g.drawRect( 114+xOffset, 63, 398-114, 353-63 );
+			g.drawString( "50x50cm ground cage limits CAMERA 2.", 112+xOffset, 65 );
+
+
 
 			//114, 63
 			// 398, 353
