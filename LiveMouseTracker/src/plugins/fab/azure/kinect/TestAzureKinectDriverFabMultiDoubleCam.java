@@ -194,7 +194,33 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
         
         depthMergeSequence = new Sequence("depthMerge");
         infraMergeSequence = new Sequence("infraMerge");
+
         
+        // Chez Nico
+                 
+        // K1 x:-113 y:-91 cropX: 0 cropY:0 cropW: 587 cropH:453
+        // K2 x:336 y:-82 cropX: 198 cropY:0 cropW: 356 cropH:447
+
+        cameraK1.x = -113;
+        cameraK1.y = -91;
+        cameraK1.cropX = 0;
+        cameraK1.cropY = 0;
+        cameraK1.cropWidth = 587;
+        cameraK1.cropHeight = 454;
+        
+        cameraK2.x = 336;
+        cameraK2.y = -82;
+        cameraK2.cropX = 198;
+        cameraK2.cropY = 0;
+        cameraK2.cropWidth = 356;
+        cameraK2.cropHeight = 448;
+
+         
+         
+         
+        
+        /* Chez Philippe
+         
         cameraK1.x = -60;
         cameraK1.y = -75;
         cameraK1.cropX = 0;
@@ -213,6 +239,7 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
         
 //        K1 x:-60 y:-75 cropX: 0 cropY:0 cropW: 587 cropH:491
 //        K2 x:487 y:-68 cropX: 44 cropY:0 cropW: 510 cropH:484
+         */ 
 
 
     }
