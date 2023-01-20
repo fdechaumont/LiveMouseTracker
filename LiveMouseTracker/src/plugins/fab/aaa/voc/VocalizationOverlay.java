@@ -36,6 +36,7 @@ public class VocalizationOverlay extends Overlay {
     AudioFile2 audioFile;
     AudioFFTProcessing fftProcessing;
     double startSecondOffset;
+    public float MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS = 40;
 
     public VocalizationOverlay(
             //double N, double Fs, double magnitudeBinSize, double[] frequencyMax,
@@ -43,10 +44,11 @@ public class VocalizationOverlay extends Overlay {
                                 ArrayList<Voc> vocList, FrequencyCancelerAndSTD frequencyCanceler, AudioFile2 audioFile,
                                 AudioFFTProcessing fftProcessing, //, ArrayList<Voc> vocPreFilteredList,
                                 //, double proba
-                                DrawMode drawMode, double startSecondOffset
+                                DrawMode drawMode, double startSecondOffset, float MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS
                                 ) {
         super( "Voc Overlay" , OverlayPriority.TOOLTIP_HIGH );
 
+        this.MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS = MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS;
         if ( drawMode != null )
         {
         	currentDrawMode = drawMode;
@@ -80,7 +82,7 @@ public class VocalizationOverlay extends Overlay {
     }
 
     @Override
-    public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas) {
+    public void paint(Graphics2D g, Sequence sequence, IcyCanvas canvas ) {
 
         synchronized( vocList )
         {
@@ -175,7 +177,7 @@ public class VocalizationOverlay extends Overlay {
 
         if( currentDrawMode == DrawMode.EDIT )
         {
-            drawEditor( g , sequence, canvas );
+            drawEditor( g , sequence, canvas , MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS );
             drawCancelFrequencies( g, sequence, canvas );
 //			drawVoc( g, sequence, canvas );
 //			drawCancelFrequencies( g, sequence, canvas );
@@ -212,7 +214,7 @@ public class VocalizationOverlay extends Overlay {
 
     Voc currentSelectedVoc = null;
 
-    private void drawEditor( Graphics2D g, Sequence sequence, IcyCanvas canvas )
+    private void drawEditor( Graphics2D g, Sequence sequence, IcyCanvas canvas, float MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS )
     {
 
 //		System.out.println("draw editor");
@@ -220,7 +222,7 @@ public class VocalizationOverlay extends Overlay {
 
         try
         {
-            int width = (int) (Constant.MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS / vocList.get( 0 ).xLengthInMs);
+            int width = (int) ( MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS / vocList.get( 0 ).xLengthInMs);
             g.setColor( Color.pink );
             g.fillRect( 0 , 0, width, 10 );
             g.fillRect( (int)mouseX-width/2 , (int)mouseY, width, 10 );

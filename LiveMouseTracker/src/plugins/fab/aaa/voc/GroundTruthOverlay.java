@@ -310,7 +310,7 @@ public class GroundTruthOverlay extends Overlay {
 
 	}
 
-	private void fuseGroundTruth(ArrayList<GroundTruthVoc> gtVocArrayList2) {
+	private void fuseGroundTruth(ArrayList<GroundTruthVoc> gtVocArrayList2 ) {
 
 		boolean hasFused = true;
 		while ( hasFused )
@@ -321,7 +321,7 @@ public class GroundTruthOverlay extends Overlay {
 				GroundTruthVoc nextVoc = getNextGTVoc( gtVoc );
 
 				if ( nextVoc == null ) continue;
-				if ( nextVoc.start - gtVoc.end < Constant.MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS )
+				if ( nextVoc.start - gtVoc.end < Constant.GROUND_TRUTH_MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS )
 				{
 					// fuse
 					gtVocArrayList2.remove( gtVoc );
@@ -390,11 +390,11 @@ public class GroundTruthOverlay extends Overlay {
 		{
 			if (gtVoc != gtVocCandidate )
 			{
-				if ( Math.abs( gtVocCandidate.start - gtVoc.end ) <= Constant.MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS )
+				if ( Math.abs( gtVocCandidate.start - gtVoc.end ) <= Constant.GROUND_TRUTH_MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS )
 				{
 					return true;
 				}
-				if ( Math.abs( gtVocCandidate.end - gtVoc.start ) <= Constant.MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS )
+				if ( Math.abs( gtVocCandidate.end - gtVoc.start ) <= Constant.GROUND_TRUTH_MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS )
 				{
 					return true;
 				}
@@ -541,8 +541,8 @@ public class GroundTruthOverlay extends Overlay {
 
 		for ( GroundTruthVoc gtVoc : gtVocArrayList )
 		{
-			if ( Math.abs( gtVoc.start - voc.getStartInMs() ) < Constant.MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS
-					&& Math.abs( gtVoc.end - voc.getEndInMs() ) < Constant.MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS
+			if ( Math.abs( gtVoc.start - voc.getStartInMs() ) < Constant.GROUND_TRUTH_MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS
+					&& Math.abs( gtVoc.end - voc.getEndInMs() ) < Constant.GROUND_TRUTH_MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS
 					) return gtVoc;
 		}
 		return null;

@@ -8,7 +8,7 @@ import icy.system.thread.Processor;
 public class NoiseCanceler {
 
 
-	public NoiseCanceler( AudioFFTProcessing fftProcessing ) {
+	public NoiseCanceler( AudioFFTProcessing fftProcessing, int MIN_Y_IN_SPECTRUM ) {
 
 		/*
 		if ( fftProcessing.magnitude.length > 1 )
@@ -21,12 +21,12 @@ public class NoiseCanceler {
 		double[][] magnitude = fftProcessing.getMagnitude( 0 );
 
 		// computeFrequencyToCancel()
-		computeNoiseCancellingWithMagnitude( magnitude , fftProcessing.getMagnitudeDenoised( 0 )  );
+		computeNoiseCancellingWithMagnitude( magnitude , fftProcessing.getMagnitudeDenoised( 0 ) , MIN_Y_IN_SPECTRUM );
 
 	}
 
 
-	private void computeNoiseCancellingWithMagnitude(double[][] magnitude , double[][] magnitudeDenoised )
+	private void computeNoiseCancellingWithMagnitude(double[][] magnitude , double[][] magnitudeDenoised , int MIN_Y_IN_SPECTRUM )
 	{
 		int width = magnitude.length;
 		int height = magnitude[0].length;
@@ -61,8 +61,8 @@ public class NoiseCanceler {
 		{		
 			ArrayList<OptimSteerFilter> filterList = new ArrayList<>();
 	
-			//for ( double angle = -80 ; angle <= 80 ; angle+=20 )
 			for ( double angle = -80 ; angle <= 80 ; angle+=20 )
+			//for ( double angle = -85 ; angle <= 85 ; angle+=5 ) // for ( double angle = -80 ; angle <= 80 ; angle+=20 ) TODOTODAY
 			{
 				double rad = Math.toRadians( angle );
 				OptimSteerFilter osf = new OptimSteerFilter();
@@ -121,7 +121,7 @@ public class NoiseCanceler {
 					public void run() {
 						//for ( int y = windowY+10; y < height - windowY-10; y++ )
 	
-						for ( int y = Constant.MIN_Y_IN_SPECTRUM; y < Constant.MAX_Y_IN_SPECTRUM; y++ )
+						for ( int y = MIN_Y_IN_SPECTRUM; y < Constant.MAX_Y_IN_SPECTRUM; y++ )
 						{
 							double max = -Double.MAX_VALUE;
 							for ( OptimSteerFilter osf : filterList )

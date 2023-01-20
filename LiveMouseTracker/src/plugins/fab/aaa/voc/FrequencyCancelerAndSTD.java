@@ -24,7 +24,7 @@ public class FrequencyCancelerAndSTD {
 		return vocMaskList;
 	}
 
-	public FrequencyCancelerAndSTD( AudioFFTProcessing fftProcessing , boolean pupMode, float detectionThreshold, boolean cancelFrequency ) {
+	public FrequencyCancelerAndSTD( AudioFFTProcessing fftProcessing , boolean pupMode, float detectionThreshold, boolean cancelFrequency, float MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS, int MIN_Y_IN_SPECTRUM ) {
 
 		/*
 		if ( fftProcessing.magnitude.length > 1 )
@@ -37,7 +37,7 @@ public class FrequencyCancelerAndSTD {
 		double[][] magnitude = fftProcessing.getMagnitudeDenoised( 0 );
 
 		// computeFrequencyToCancel()
-		this.cancelList = computeCancelFrequencyListWithMagnitude( magnitude , fftProcessing , pupMode, detectionThreshold, cancelFrequency );
+		this.cancelList = computeCancelFrequencyListWithMagnitude( magnitude , fftProcessing , pupMode, detectionThreshold, cancelFrequency, MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS, MIN_Y_IN_SPECTRUM );
 
 		// to test if the system can work without it.
 //		cancelList.clear();
@@ -49,8 +49,10 @@ public class FrequencyCancelerAndSTD {
 	}
 
 	private ArrayList<FrequencyCancel> computeCancelFrequencyListWithMagnitude(double[][] magnitude ,  AudioFFTProcessing fftProcessing,
-			boolean pupMode , float detectionThreshold, boolean cancelFrequency ) {
+			boolean pupMode , float detectionThreshold, boolean cancelFrequency, float MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS, int MIN_Y_IN_SPECTRUM ) {
 
+		
+		//MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS = 40f
 		//float detectionThreshold = 0.1f;
 
 //		if ( pupMode ) // now in fullvocprocessor
@@ -67,7 +69,7 @@ public class FrequencyCancelerAndSTD {
 
 		// compute frequency to cancel in binned data.
 		// work using window of continuous data
-		int lenY = (Constant.MAX_Y_IN_SPECTRUM - Constant.MIN_Y_IN_SPECTRUM);
+		int lenY = (Constant.MAX_Y_IN_SPECTRUM - MIN_Y_IN_SPECTRUM);
 
 		double[] allValues = new double[ lenY * width ];
 
@@ -76,7 +78,7 @@ public class FrequencyCancelerAndSTD {
 		{
 			for ( int x = 0 ; x < width; x++ )
 			{
-				double val = magnitude[x][freq+Constant.MIN_Y_IN_SPECTRUM ];
+				double val = magnitude[x][freq+MIN_Y_IN_SPECTRUM ];
 
 				allValues[offsetAll++]=val;
 			}
@@ -98,6 +100,7 @@ public class FrequencyCancelerAndSTD {
 		// Frequency cancelling
 		System.out.println("Cancel frequency enabled: " + cancelFrequency );
 		
+
 		{			
 			double threshold = mean+0.15d*std; //0.12
 			for ( int freq = 0 ; freq < height ; freq++ )
@@ -136,8 +139,9 @@ public class FrequencyCancelerAndSTD {
 			}
 		}
 
+		
 		// Post filtering
-
+		System.out.println("Remove vertical noise" );
 		// remove vertical noise
 		for ( int x = 0 ; x < width ; x++ )
 		{
@@ -153,8 +157,9 @@ public class FrequencyCancelerAndSTD {
 				buffer[x+ ( y )*width ]-=m*20d;
 			}
 		}
+		
 
-
+		System.out.println("Remove values below threshold" );
 		// remove small values
 		for ( int x = 0 ; x < width ; x++ )
 		{
@@ -169,6 +174,7 @@ public class FrequencyCancelerAndSTD {
 		}
 
 		// perform detection
+		System.out.println("Perform detection" );
 		{
 			// create boolean Mask
 			boolean[] maskImage = new boolean[buffer.length];
@@ -225,7 +231,7 @@ public class FrequencyCancelerAndSTD {
 					}
 				}
 
-
+				
 				if ( nbInSameVertical == 0 && roi.getColor() != Color.red )
 				{
 					roi.setColor( Color.cyan );
@@ -235,6 +241,7 @@ public class FrequencyCancelerAndSTD {
 				{
 					roi.setColor( Color.gray );
 				}
+				
 				
 				// keep cyan, green, pink
 				if ( roi.getColor().equals( Color.cyan )
@@ -286,7 +293,7 @@ public class FrequencyCancelerAndSTD {
 					double distanceDurationInMs = fftProcessing.xTimeInMs * distanceInPx;
 					//double distanceDurationInMs = distanceInPx; // FIXME : RECONVERT IN MS !
 //					System.out.println("DistMS: " + distanceDurationInMs );
-					if ( distanceDurationInMs <= Constant.MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS )
+					if ( distanceDurationInMs <= MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS )
 					{
 						//					System.out.println("Fused");
 						//Voc newVoc = Voc.fuseVoc( vocA , vocB );

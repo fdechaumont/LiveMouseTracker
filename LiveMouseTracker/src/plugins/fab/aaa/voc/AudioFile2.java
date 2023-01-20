@@ -36,6 +36,7 @@ public class AudioFile2 {
 	public float vocMeanFrequency = 0;
 	public float vocSTDFrequency = 0;
     double meanPower;
+    public float amplificationFactor = 1;
 
     /** Magnitude bin size to display all info on a schrinked vertical line of spectrum */
     private int magnitudeBinSize = 0;
@@ -148,8 +149,9 @@ public class AudioFile2 {
 
     }
 
-    public AudioFile2( File file ) throws USVProcessingException {
+    public AudioFile2( File file, float amplificationFactor ) throws USVProcessingException {
     	this.file = file;
+    	this.amplificationFactor = amplificationFactor;
     	reloadData();
     }
 
@@ -224,6 +226,19 @@ public class AudioFile2 {
 
 		}
 
+		// amplify
+		if ( this.amplificationFactor != 1 )
+		{			
+			System.out.println("Amplifying...factor: " + this.amplificationFactor );
+			for ( int channel = 0 ; channel < numChannel ; channel++ )
+			{
+				for ( int indexBuffer = 0 ; indexBuffer < bufferSizePerChannel -1 ; indexBuffer++ )
+				{
+					sampleBuffer[channel][indexBuffer]*=this.amplificationFactor;
+				}
+			}
+		}
+		
 		// normalize
 		if ( Constant.NORMALIZE )
 		{

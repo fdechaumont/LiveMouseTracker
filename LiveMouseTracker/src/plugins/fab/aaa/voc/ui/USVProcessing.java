@@ -218,6 +218,29 @@ public class USVProcessing extends PluginActionable implements PluginThreaded, A
 				System.out.println("Setting detection threshold to: " + detectionThreshold );
 				processor.detectionThreshold = detectionThreshold;
 			}
+			
+			if ( optionArray[i].equals("-amplificationFactor") )
+			{
+				float amplificationFactor = Float.parseFloat( optionArray[i+1] );
+				System.out.println("Setting amplification to x: " + amplificationFactor );
+				processor.amplificationFactor = amplificationFactor;
+			}
+			
+			if ( optionArray[i].equals("-maxFuseVocMs") )
+			{
+				float maxFuseVocMs = Float.parseFloat( optionArray[i+1] );
+				System.out.println("Setting maxFuseVocMs (MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS) to : " + maxFuseVocMs );
+				processor.MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS = maxFuseVocMs;
+			}
+			
+			if ( optionArray[i].equals("-minDetectionFrequency") )
+			{
+				float minDetectionFrequency = Float.parseFloat( optionArray[i+1] );
+				int MIN_Y_IN_SPECTRUM = (int) ( minDetectionFrequency * 512f / 300f );
+				System.out.println("Setting minDetectionFrequency to : " + minDetectionFrequency + " MIN_Y_IN_SPECTRUM  = " + MIN_Y_IN_SPECTRUM );
+				processor.MIN_Y_IN_SPECTRUM = MIN_Y_IN_SPECTRUM;
+			}
+
 		}
 
 		
@@ -236,7 +259,7 @@ public class USVProcessing extends PluginActionable implements PluginThreaded, A
 			processor.setDrawMode( DrawMode.WEB );
 			processor.MANAGE_GROUND_TRUTH = false;
 			processor.setCloseAfterProcessing( true );
-			processor.SAVE_DATA_EXTRACTED = false;
+			processor.SAVE_DATA_EXTRACTED = true;
 		}
 
 		

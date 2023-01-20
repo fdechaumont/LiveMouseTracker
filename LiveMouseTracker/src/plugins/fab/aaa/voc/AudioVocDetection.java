@@ -323,7 +323,7 @@ public class AudioVocDetection {
 
 	}
 
-	private void fuseVoc( ArrayList<Voc> vocList ) {
+	private void fuseVoc( ArrayList<Voc> vocList, float MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS ) {
 
 		if ( FUSE_CLOSE_VOC )
 		{
@@ -351,7 +351,7 @@ public class AudioVocDetection {
 					float distanceDurationInMs = vocA.xLengthInMs * distanceInPx;
 
 					//				System.out.println( "distance " + distanceInPx);
-					if ( distanceDurationInMs <= Constant.MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS )
+					if ( distanceDurationInMs <= MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS )
 					{
 						//					System.out.println("Fused");
 						Voc newVoc = Voc.fuseVoc( vocA , vocB );
@@ -368,12 +368,12 @@ public class AudioVocDetection {
 
 	}
 
-	private double[] reduceArray(double[] magVertical ) {
-		int newSize = Constant.MAX_Y_IN_SPECTRUM-Constant.MIN_Y_IN_SPECTRUM;
+	private double[] reduceArray(double[] magVertical, int MIN_Y_IN_SPECTRUM ) {
+		int newSize = Constant.MAX_Y_IN_SPECTRUM-MIN_Y_IN_SPECTRUM;
 
 		double[] reducedArray = new double[ newSize ];
 
-		int shift = Constant.MIN_Y_IN_SPECTRUM;
+		int shift = MIN_Y_IN_SPECTRUM;
 
 		for ( int y = 0; y < reducedArray.length ; y++ )
 		{

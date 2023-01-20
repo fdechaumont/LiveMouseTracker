@@ -155,7 +155,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static final boolean SOUND_ENABLED = false;
 
 	/** This filtering const is used in the detector of wrong detection */
-	public static float FILTERING_ANIMAL_VS_UNKNOWN_THRESHOLD = 0.95f; // 0.7 // 1 error in an animal track is enough to break identity. Should be fixed.
+	public static float FILTERING_ANIMAL_VS_UNKNOWN_THRESHOLD = 1; //0.95f; // 0.7 // 1 error in an animal track is enough to break identity. Should be fixed.
 	public static boolean MACHINE_LEARNING_DETECTION_ERROR_ENABLED = true;
 	/** Number of default latency frame of the RFID reading (*33ms to get the latency)*/
 	public static final int RFID_DEFAULT_LATENCY = 3;
@@ -239,12 +239,12 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	// General options and final parameters
 
-	public static boolean TRACKING_IDENTITY_RECOVERY_ENABLED = false; //true; //false; // true avant
+	public static boolean TRACKING_IDENTITY_RECOVERY_ENABLED = true; //true; //false; // true avant
 //	public static boolean PROBLEM_GENERATION_ENABLED = false;
 	/** Enable Computation of histogram same as the one in IdTracker */
 	public static boolean ID_TRACKER_LIKE_HISTOGRAM_FEATURES_ENABLED = false;
 
-	public static boolean TRACK_REJECTED_TRACKING_ENABLED = true;
+	public static boolean TRACK_REJECTED_TRACKING_ENABLED = true; // TRUE
 	private static int TRACK_REJECTED_LENGTH = 60;		// frames before stating that the track is an error track and should be integrated in depth map
 
 	public static boolean SHOW_SMALL_SPURIOUS_DETECTION_ENABLED = false;
@@ -426,15 +426,15 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	static public PerfLoggerOverlay perfLogger = null;
 
-	public enum CAGE_MODE { MULTI_CLASSIC_16, CLASSIC_16, RATS_25, SUPER_BLOCKS, MULTI_NICO } // MULTI_CLASSIC_16 = Philippe
+	public enum CAGE_MODE { MULTI_CLASSIC_16, CLASSIC_16, RATS_25, SUPER_BLOCKS, MULTI_NICO  } // MULTI_CLASSIC_16 = Philippe
 
 	//boolean rat_mode = false;
 	//public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
-	public static CAGE_MODE cageMode = CAGE_MODE.MULTI_NICO;
+	public static CAGE_MODE cageMode = CAGE_MODE.MULTI_CLASSIC_16;
 
 	//static KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
-	TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam();
+	TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 3 );
 
 	
 	public enum CRITICAL_LOOP_STEP
@@ -896,6 +896,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 						{
 							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 5000 );
 						}
+						
 						
 						//infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
 						lutInfraDone = true;
@@ -3426,10 +3427,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		this.ROICageFloor = roiCage50x50Floor;
 		updateAllROICage();
  */
-	/*
+	
 		if ( cageMode == CAGE_MODE.MULTI_CLASSIC_16 )
 		{
-			int shiftX = 512;
+			int shiftX = 506+23+6;
 			
 
 			ROI2DPolygon roiCage50x50_A = new ROI2DPolygon( new Point2D.Double( 86-5+3 +30, 55-5-17 +30 ) );
@@ -3444,8 +3445,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			roiCage50x50_B.addNewPoint( new Point2D.Double(  shiftX+86-5+3 +30 , 395+5 -17 -30 ), false);
 			roiCage50x50_B.setCreating( false );
 
-			ROI2DRectangle roiGate_A = new ROI2DRectangle( 420+5+3 -30 , 118+15 , shiftX+86-5+3 +30, 118+5+20 );
-			ROI2DRectangle roiGate_B = new ROI2DRectangle( 420+5+3 -30 , 267+15 , shiftX+86-5+3 +30, 267+5+20 );
+			ROI2DRectangle roiGate_A = new ROI2DRectangle( 380 , 118+4, 660, 145-4 );
+			ROI2DRectangle roiGate_B = new ROI2DRectangle( 380 , 267+4, 660, 294-4 );
 			
 			kinectStreamer.setSequenceForOverlay( infraOut );
 			
@@ -3454,14 +3455,13 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			cageFloorROIList.add( roiCage50x50_A );
 			cageFloorROIList.add( roiCage50x50_B );
 			
-//			cageFloorROIList.add( roiGate_A );
-//			cageFloorROIList.add( roiGate_B );
+			cageFloorROIList.add( roiGate_A );
+			cageFloorROIList.add( roiGate_B );
 			
 			setROICageFloor( cageFloorROIList );
 			
-
 			ROI2DArea roiCage = new ROI2DArea( cageFloorMask );
-			int dilatation = 10;
+			int dilatation = 3;
 			System.out.println("Dilatation of floor (nb pixels): " + dilatation );
 			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
 			roiCage= MorphoROITools.dilateROI( roiCage , dilatation, dilatation , 1 );			
@@ -3488,24 +3488,32 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			//updateAllROICage();
 
 		}
-		*/
+		
+		
+		
 		
 		if ( cageMode == CAGE_MODE.MULTI_NICO )
 		{
-			int shiftX = 512;
 			
-
-			ROI2DPolygon roiCage50x50_A = new ROI2DPolygon( new Point2D.Double( 53, 86 ) );
-			roiCage50x50_A.addNewPoint( new Point2D.Double( 391,80 ), false);
-			roiCage50x50_A.addNewPoint( new Point2D.Double( 391,307 ), false);
-			roiCage50x50_A.addNewPoint( new Point2D.Double( 56,306 ), false);
+			ROI2DPolygon roiCage50x50_A = new ROI2DPolygon( new Point2D.Double( 58, 86 ) );
+			roiCage50x50_A.addNewPoint( new Point2D.Double( 391,86 ), false);
+			roiCage50x50_A.addNewPoint( new Point2D.Double( 391,312 ), false);
+			roiCage50x50_A.addNewPoint( new Point2D.Double( 58,312 ), false);
 			roiCage50x50_A.setCreating( false );
 						
 			ROI2DPolygon roiCage50x50_B = new ROI2DPolygon( new Point2D.Double( 513,79 ) );
 			roiCage50x50_B.addNewPoint( new Point2D.Double( 623,79 ), false);
-			roiCage50x50_B.addNewPoint( new Point2D.Double( 621,304 ), false);
-			roiCage50x50_B.addNewPoint( new Point2D.Double( 512,306 ), false);
+			roiCage50x50_B.addNewPoint( new Point2D.Double( 621,189 ), false);
+			roiCage50x50_B.addNewPoint( new Point2D.Double( 512,189 ), false);
 			roiCage50x50_B.setCreating( false );
+
+			ROI2DPolygon roiCage50x50_C = new ROI2DPolygon( new Point2D.Double( 513,201 ) );
+			roiCage50x50_C.addNewPoint( new Point2D.Double( 623,201 ), false);
+			roiCage50x50_C.addNewPoint( new Point2D.Double( 621,312 ), false);
+			roiCage50x50_C.addNewPoint( new Point2D.Double( 512,312 ), false);
+			roiCage50x50_C.setCreating( false );
+			
+			// 304
 
 			ROI2DRectangle roiGate_A = new ROI2DRectangle( 388,119,526,148 );
 			ROI2DRectangle roiGate_B = new ROI2DRectangle( 388,240,526,269 );
@@ -3516,6 +3524,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			
 			cageFloorROIList.add( roiCage50x50_A );
 			cageFloorROIList.add( roiCage50x50_B );
+			cageFloorROIList.add( roiCage50x50_C );
 			
 			cageFloorROIList.add( roiGate_A );
 			cageFloorROIList.add( roiGate_B );
@@ -3794,18 +3803,19 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				110:364,257
 				111:302,222
 				*/
-				
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 136,   123 ) , 30 , "COM100" ) );	
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 79,    112 ) , 30 , "COM101" ) );	
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 254,   112 ) , 30 , "COM103" ) );	
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 192,   167 ) , 30 , "COM104" ) );	
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 360,   132 ) , 30 , "COM105" ) );	
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 132,   279 ) , 30 , "COM106" ) );	
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 80,    215 ) , 30 , "COM107" ) );	
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 258,   217 ) , 30 , "COM108" ) );					
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 254,   280 ) , 30 , "COM109" ) );	
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 364,   257 ) , 30 , "COM110" ) );					
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 302,   222 ) , 30 , "COM111" ) );
+				// 30
+				int size = 30; // 30
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 136,   123 ) , size , "COM100" ) );	
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 79,    112 ) , size , "COM101" ) );	
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 254,   112 ) , size , "COM103" ) );	
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 192,   167 ) , size , "COM104" ) );	
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 360,   132 ) , size , "COM105" ) );	
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 132,   279 ) , size , "COM106" ) );	
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 80,    225 ) , size , "COM107" ) );	
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 258,   217 ) , size , "COM108" ) );					
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 254,   280 ) , size , "COM109" ) );	
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 364,   257 ) , size , "COM110" ) );					
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 302,   222 ) , size , "COM111" ) );
 				
 				
 			}
@@ -3877,7 +3887,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  336 ) , 30 , "COM44" ) ); // 15
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  336 ) , 30 , "COM45" ) ); // 18
 				
-				int shiftX = 512;
+				int shiftX = 506+23+6;
 				
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133+shiftX,   81 ) , 30 , "COM50" ) ); 
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214+shiftX,   81 ) , 30 , "COM51" ) ); 

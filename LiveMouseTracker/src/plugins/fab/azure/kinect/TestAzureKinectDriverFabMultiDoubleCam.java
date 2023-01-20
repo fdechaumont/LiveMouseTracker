@@ -55,9 +55,14 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
     
     private final Sequence depthMergeSequence;
     private final Sequence infraMergeSequence;
+    
+    private ArrayList<CameraLMT> cameraList;
 
+    /*
     public CameraLMT cameraK1 = new CameraLMT("K1");
     public CameraLMT cameraK2 = new CameraLMT("K2");
+    */
+	private int nbCamera;
     
     class CameraLMT
 	{
@@ -73,6 +78,18 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
     	{
     		this.name = name;
     	}
+    	
+    	public void setData( int x, int y, int cropX, int cropY, int cropW, int cropH )
+    	{
+    		this.x = x;
+    		this.y = y;
+    		this.cropX = cropX;
+    		this.cropY = cropY;
+    		this.cropWidth = cropW;
+    		this.cropHeight = cropH;
+    	}
+    	
+    	
     	@Override
     	public String toString() {
     		return name + " x:" + x + " y:" +y + " cropX: "+ cropX + " cropY:" + cropY + " cropW: " + cropWidth + " cropH:" + cropHeight;
@@ -85,7 +102,7 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
     	CameraLMT camera = null;
 		public TestAzureKinectDriverFabMultiDoubleCamOverlay() {
 			super("Overlay Kinect Streamer");
-			camera = cameraK1;
+			//camera = cameraK1;
 			this.setReceiveKeyEventOnHidden( true );
 		}
 		
@@ -98,16 +115,33 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
 			
 			if ( e.getKeyChar() == '1' )
 			{				
-				camera = cameraK1;
+				camera = cameraList.get( 0 );
 				System.out.println("Active camera: " + camera );
 			}
 
 			if ( e.getKeyChar() == '2' )
 			{				
-				camera = cameraK2;
+				camera = cameraList.get( 1 );
+				System.out.println("Active camera: " + camera );
+			}
+			
+			if ( e.getKeyChar() == '3' )
+			{				
+				camera = cameraList.get( 2 );
+				System.out.println("Active camera: " + camera );
+			}
+			
+			if ( e.getKeyChar() == '4' )
+			{				
+				camera = cameraList.get( 3 );
 				System.out.println("Active camera: " + camera );
 			}
 				
+			if ( camera==null )
+			{
+				return;
+			}
+		
 			if ( e.getKeyChar() == 'x' )
 			{
 				camera.x--;
@@ -167,8 +201,13 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
 			}
 			
 			System.out.println("---");
-			System.out.println( cameraK1 );
-			System.out.println( cameraK2 );
+			for ( CameraLMT c: cameraList)
+			{
+				System.out.println( c );
+			}
+				
+				
+			//System.out.println( cameraK2 );
 			e.consume();
 			//super.keyPressed(e, imagePoint, canvas);
 			
@@ -176,12 +215,13 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
     	
     }
 
-    public TestAzureKinectDriverFabMultiDoubleCam()
+    public TestAzureKinectDriverFabMultiDoubleCam( int nbCamera )
     {
         super();
 
         client = null;
         stopped = true;
+        this.nbCamera = nbCamera;
 
         receivedDatasets = new ArrayList<>();
 
@@ -196,11 +236,36 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
         infraMergeSequence = new Sequence("infraMerge");
 
         
+        cameraList = new ArrayList<>();
+        
+        for ( int i = 0 ; i < nbCamera ; i++ )
+        {
+        	cameraList.add( new CameraLMT( "Camera " + i ) );
+        }
+        
+        // Robin 3 cameras:
+        
+        /*
+        Camera 0 x:-56 y:-71 cropX: 0 cropY:1 cropW: 472 cropH:468
+Camera 1 x:404 y:73 cropX: 213 cropY:133 cropW: 287 cropH:251
+Camera 2 x:640 y:-52 cropX: 163 cropY:0 cropW: 336 cropH:447
+
+         */
+        cameraList.get(0).setData( -56,-71,0,1,472,468); 
+        cameraList.get(1).setData( 404, 73,213,133,287,251 ); 
+        cameraList.get(2).setData( 640 , -52 , 163, 0, 339 ,447 ); 
+        
+
+        
+        
+        
         // Chez Nico
                  
         // K1 x:-113 y:-91 cropX: 0 cropY:0 cropW: 587 cropH:453
         // K2 x:336 y:-82 cropX: 198 cropY:0 cropW: 356 cropH:447
 
+        /*
+        
         cameraK1.x = -113;
         cameraK1.y = -91;
         cameraK1.cropX = 0;
@@ -215,6 +280,9 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
         cameraK2.cropWidth = 356;
         cameraK2.cropHeight = 448;
 
+         */
+        
+        
          
          
          
@@ -281,6 +349,9 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
 			}
 		}
 
+		// force dimension
+		maxMergeX = 980;
+		maxMergeY = 400;
 		
 		IcyBufferedImage infraImage = new IcyBufferedImage( maxMergeX, maxMergeY, 1 , DataType.USHORT );
 		IcyBufferedImage depthImage = new IcyBufferedImage( maxMergeX, maxMergeY, 1 , DataType.USHORT );
@@ -348,62 +419,26 @@ public class TestAzureKinectDriverFabMultiDoubleCam extends PluginActionable imp
 
 							ArrayList<ImageKinect> kinectImageArrayList = new ArrayList<ImageKinect>();
 							
-							ImageKinect k1 = new ImageKinect( null, null, cameraK1.x, cameraK1.y );
-							ImageKinect k2 = new ImageKinect( null, null, cameraK2.x, cameraK2.y ); // 87 : decalge en x
-							//ImageKinect k2 = new ImageKinect( null, null, 512, 0 );
-							
-							//ImageKinect k2 = new ImageKinect( null, null, 512+32, 0 );
-							
-							// azure kinect resolution: 640x576
-							
-							//k1.cropRect = new Rectangle( (640-512)/2,(576-424)/2 ,512,424); // center a crop at the size of the previous kinect
-							//k2.cropRect = new Rectangle( (640-512)/2,(576-424)/2 ,512,424);
-							
-							//k1.cropRect = new Rectangle( 0,0 ,560, 424 );							
-//							k2.cropRect = new Rectangle( (640-512)/2,(576-424)/2 ,640, 424 );
-							
-//							k1.cropRect = null;
-//							k2.cropRect = null;
-							
-							k1.cropRect = new Rectangle( cameraK1.cropX, cameraK1.cropY , cameraK1.cropWidth, cameraK1.cropHeight );
-							k2.cropRect = new Rectangle( cameraK2.cropX, cameraK2.cropY , cameraK2.cropWidth, cameraK2.cropHeight );
+							for ( int i = 0 ; i < nbCamera; i++ )
+							{
+								CameraLMT cam = cameraList.get(i);
+								ImageKinect imageKinect = new ImageKinect( null, null, cam.x, cam.y ); 
+								imageKinect.cropRect = new Rectangle( cam.cropX, cam.cropY , cam.cropWidth, cam.cropHeight );
+								kinectImageArrayList.add( imageKinect );								
+							}
 							
 							// convert and show image
 							for (Dataset dataset : datasets)
 							{
-		                        img = Utils.toIcyShortImage(dataset.depthImage );
-		                        //System.out.println("Depth: w:" + img.getWidth() +" ind: " + ind );
-		                        if (ind==0)
-		                        {
-		                        	k1.depthImage = img;
-//		                        	depth1.setImage(0, 0, img);
-		                        }
-		                        if (ind==1)
-		                        {
-		                        	k2.depthImage = img;
-		                        	//depth2.setImage(0, 0, img);
-		                        }
-		                        
-		                        //System.out.println("Infra: w:" + img.getWidth() +" ind: " + ind );
-		                        img = Utils.toIcyShortImage(dataset.irImage );
-		                        if (ind==0)
-		                        {
-		                        	k1.infraImage=img;
-		                        	//ir1.setImage(0, 0, img);
-		                        }
-		                        if (ind==1)
-		                        {
-		                        	k2.infraImage = img;
-		                        	//ir2.setImage(0, 0, img);
-		                        }
-		                        
-
+								img = Utils.toIcyShortImage(dataset.depthImage );
+								kinectImageArrayList.get(ind).depthImage = img;
+								
+								img = Utils.toIcyShortImage(dataset.irImage );
+								kinectImageArrayList.get(ind).infraImage = img;
 								ind++;
 							}
-							
-							// merging sources
-							kinectImageArrayList.add( k1 );
-							kinectImageArrayList.add( k2 );
+
+
 							ImageKinect kinectImageMerged = mergeKinectImage( kinectImageArrayList );
 							infraMergeSequence.setImage( 0 , 0, kinectImageMerged.infraImage );
 							depthMergeSequence.setImage( 0 , 0, kinectImageMerged.depthImage );

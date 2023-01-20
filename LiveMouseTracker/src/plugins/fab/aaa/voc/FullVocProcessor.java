@@ -30,15 +30,18 @@ public class FullVocProcessor {
 	Sequence sequence;
 	Sequence sequenceDenoised;
 	boolean showSequence = true;
-	private static final boolean GENERATE_DENOISED_SPECTRUM_SEQUENCE = false;
+	private static final boolean GENERATE_DENOISED_SPECTRUM_SEQUENCE = false; // false TODOTODAY
 	public static boolean SAVE_VOC_PATCHES = false;
 	public boolean MANAGE_GROUND_TRUTH = true;
-	public boolean clearWavDataAfterLoad = false;
+	public boolean clearWavDataAfterLoad = false; // false TODOTODAY
 	String htmlSaveFolder = null;
 	boolean closeAfterProcessing = false;
 	boolean checkRepeatInUSV = false;
 	public float detectionThreshold = 0.1f;
+	public float amplificationFactor = 1f;
 	public boolean cancelFrequency = true;
+	public float MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS = 40f;
+	public int MIN_Y_IN_SPECTRUM = 100; // 100*300/512 = 58.57 kHz
 
 	public void setCloseAfterProcessing(boolean closeAfterProcessing) {
 		this.closeAfterProcessing = closeAfterProcessing;
@@ -90,7 +93,7 @@ public class FullVocProcessor {
 	{
 		fireStatusToAnalysisListener( "Starting analysis from " + startSecond + "s to " + endSecond + "s");
 
-		this.audioFile = new AudioFile2 ( file ); // FIx: should not be class member anymore
+		this.audioFile = new AudioFile2 ( file, this.amplificationFactor ); // FIx: should not be class member anymore		
 
 		if( doCrop )
 		{
@@ -102,10 +105,10 @@ public class FullVocProcessor {
 				audioFile.getWaveFormData(), audioFile.getSampleRate(), 0.75f , 1024 ); // AviSoft is N=1024, F=100, O=75
 
 		fireStatusToAnalysisListener("Performing noise cancellation...");
-		new NoiseCanceler( fftProcessing );
+		new NoiseCanceler( fftProcessing, MIN_Y_IN_SPECTRUM );
 
 		fireStatusToAnalysisListener("Performing frequency canceler...");
-		FrequencyCancelerAndSTD frequencyCanceler = new FrequencyCancelerAndSTD( fftProcessing, pupMode, detectionThreshold , cancelFrequency );
+		FrequencyCancelerAndSTD frequencyCanceler = new FrequencyCancelerAndSTD( fftProcessing, pupMode, detectionThreshold , cancelFrequency, MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS, MIN_Y_IN_SPECTRUM );
 
 		if ( showSequence )
 		{
@@ -184,7 +187,7 @@ public class FullVocProcessor {
 			fireStatusToAnalysisListener("Rendering spectrogram with overlayed data...");
 			VocalizationOverlay vocalizationOverlay =
 					new VocalizationOverlay( audioVocDetection.getVocList() , frequencyCanceler, audioFile ,
-							fftProcessing, drawMode , startSecond );
+							fftProcessing, drawMode , startSecond, MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS );
 
 			sequence.addOverlay( vocalizationOverlay );
 			if ( checkRepeatInUSV )
@@ -262,6 +265,7 @@ public class FullVocProcessor {
 			audioFile.clearHeavyData();
 		}
 
+		// TODOTODAY
 		if ( closeAfterProcessing )
 		{
 			if ( sequence != null )
@@ -270,6 +274,7 @@ public class FullVocProcessor {
 				this.sequence = null;
 			}
 		}
+		
 
 		return audioFile;
 	}
@@ -287,7 +292,8 @@ public class FullVocProcessor {
 
 		System.out.println("TEST 01");
 		// cut in 50 secs part to save data.
-		this.audioFile = new AudioFile2 ( file );
+		this.audioFile = new AudioFile2 ( file, this.amplificationFactor );
+	
 		double totalDuration = audioFile.getDurationInSecond();
 		this.totalDurationMs = audioFile.getDurationInMilliSecond();
 
@@ -483,6 +489,7 @@ public class FullVocProcessor {
 
 	private void saveDataExtracted(ArrayList<Voc> vocList , AudioFile2 audioFile ) {
 
+		System.out.println( "SAVE_DATA_EXTRACTED: " + SAVE_DATA_EXTRACTED );
 		if ( !SAVE_DATA_EXTRACTED ) return;
 
 		/*
@@ -496,7 +503,7 @@ public class FullVocProcessor {
 
 		String resultFileName2 = audioFile.file.getAbsolutePath().toString()+".txt";
 		System.out.println( "Saving to " + resultFileName2 );
-		File resultFile2 = FileUtil.createFile( new File( resultFileName2) );
+		//File resultFile2 = FileUtil.createFile( new File( resultFileName2) );
 		VocalisationLabelExporter.export( resultFileName2 , audioFile , vocList , false, null );
 
 
