@@ -432,7 +432,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	//boolean rat_mode = false;
 	//public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
-	public static CAGE_MODE cageMode = CAGE_MODE.SIMPLE_JEREMY;
+	public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 
 	KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
 	//TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 3 );
