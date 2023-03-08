@@ -69,13 +69,13 @@ import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 import icy.type.point.Point3D;
 import loci.formats.FormatException;
-import plugins.fab.azure.kinect.TestAzureKinectDriverFab3D;
-import plugins.fab.azure.kinect.TestAzureKinectDriverFabMultiDoubleCam;
+//import plugins.fab.azure.kinect.TestAzureKinectDriverFab3D;
+//import plugins.fab.azure.kinect.TestAzureKinectDriverFabMultiDoubleCam;
 import plugins.fab.kinectdriver.KinectData;
 import plugins.fab.kinectdriver.KinectEvent;
 import plugins.fab.kinectdriver.KinectListener;
 import plugins.fab.kinectdriver.KinectStreamer;
-import plugins.fab.kinectdriver.KinectStreamer.StreamerState;
+//import plugins.fab.kinectdriver.KinectStreamer.StreamerState;
 import plugins.fab.livemousetracker.MPEGRecorder.MPEGTimeLapseRecorder;
 import plugins.fab.livemousetracker.detection.MouseDetection;
 import plugins.fab.livemousetracker.detection.MouseDetector;
@@ -293,7 +293,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static final boolean USE_MACHINELEARNING_CACHE = true;
 	private static final boolean MANAGE_FRAME_DROP = false;
 	public static final boolean HEAD_TAIL_MACHINE_LEARNING = true;
-	public static boolean USE_MULTIPLE_IDENTITY_RECOVERY_WITH_MACHINE_LEARNING = false; // false for diseapearring animals
+	public static boolean USE_MULTIPLE_IDENTITY_RECOVERY_WITH_MACHINE_LEARNING = true; // false for diseapearring animals
 
 	private static boolean SAVE_BACKGROUND = false;
 	public int saveBackgroundEachNumberOfFrame = 30*60;
@@ -426,15 +426,16 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	static public PerfLoggerOverlay perfLogger = null;
 
-	public enum CAGE_MODE { MULTI_CLASSIC_16, CLASSIC_16, RATS_25, SUPER_BLOCKS, MULTI_NICO  } // MULTI_CLASSIC_16 = Philippe
+	public enum CAGE_MODE { MULTI_CLASSIC_16, CLASSIC_16, RATS_25, SUPER_BLOCKS, MULTI_NICO, SIMPLE_JEREMY  } // MULTI_CLASSIC_16 = Philippe
 
+	
 	//boolean rat_mode = false;
 	//public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
-	public static CAGE_MODE cageMode = CAGE_MODE.MULTI_CLASSIC_16;
+	public static CAGE_MODE cageMode = CAGE_MODE.SIMPLE_JEREMY;
 
-	//static KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
-	TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 3 );
+	KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
+	//TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 3 );
 
 	
 	public enum CRITICAL_LOOP_STEP
@@ -3617,7 +3618,36 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 			updateAllROICage();
 		}
-		*/
+		 */
+		
+		if ( cageMode == CAGE_MODE.SIMPLE_JEREMY  )
+		{
+			// 95,72
+			// 461,196
+
+			ROI2DRectangle roiCage50x50_A = new ROI2DRectangle( 95 , 72, 461, 196 );
+			
+			kinectStreamer.setSequenceForOverlay( infraOut );
+			
+			ArrayList<ROI2D> cageFloorROIList = new ArrayList<ROI2D>();
+			
+			cageFloorROIList.add( roiCage50x50_A );			
+			setROICageFloor( cageFloorROIList );
+			
+			ROI2DArea roiCage = new ROI2DArea( cageFloorMask );
+			int dilatation = 3;
+			System.out.println("Dilatation of floor (nb pixels): " + dilatation );
+			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
+			roiCage= MorphoROITools.dilateROI( roiCage , dilatation, dilatation , 1 );			
+			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
+			roiCage.optimizeBounds();
+			
+			ArrayList<ROI2D> roiCageList = new ArrayList<ROI2D>();
+			roiCageList.add( roiCage );			
+			setROICage( roiCageList );
+
+		}
+
 
 		debugOverlay = new DebugOverlay("debug live tracking");
 		depthOut.addOverlay( debugOverlay );

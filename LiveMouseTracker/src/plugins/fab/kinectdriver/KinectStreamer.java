@@ -109,6 +109,10 @@ public class KinectStreamer implements ActionListener, KinectListener
         // stopPlayRecordedButton.addActionListener( this );
 
     }
+    
+    public void setSequenceForOverlay(Sequence seq ) {
+    	// do nothing
+    }
 
     public StreamerState getState()
     {
