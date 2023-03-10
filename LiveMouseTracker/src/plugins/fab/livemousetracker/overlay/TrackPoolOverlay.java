@@ -486,10 +486,10 @@ public class TrackPoolOverlay extends Overlay {
 
 			int t = clock.getT() ;
 
-			int y = 10;
+			int y = 100;
 			for ( Animal animal : animalPool.getAnimalList() )
 			{				
-				GraphicsUtil.drawHint( g, animal.getRfidID() + " " + animal.enabled, 100, y, Color.black, Color.orange );
+				GraphicsUtil.drawHint( g, animal.getRfidID() + ":" + animal.enabled, 100, y, Color.black, Color.orange );
 				y+=20;
 			}
 			

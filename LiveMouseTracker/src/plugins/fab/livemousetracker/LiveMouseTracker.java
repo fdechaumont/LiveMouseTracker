@@ -1447,17 +1447,17 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		// reject very big detection (after split) that can occur when nest is tracked/melt with animals
 		// or when the kinect is having problem
-		for ( MouseDetection rawDetection : rawMouseDetectionList )
-		{
-			if ( rawDetection.getBooleanMask().bounds.getWidth() > 150
-					|| rawDetection.getBooleanMask().bounds.getHeight() > 150
-					)
-			{
-				System.out.println("[TOO BIG DETECTION (after split) WARNING]: Too large detection found. Reset background");
-				LiveMouseTracker.resetBackGround();
-				break;
-			}
-		}
+//		for ( MouseDetection rawDetection : rawMouseDetectionList )
+//		{
+//			if ( rawDetection.getBooleanMask().bounds.getWidth() > 150
+//					|| rawDetection.getBooleanMask().bounds.getHeight() > 150
+//					)
+//			{
+//				System.out.println("[TOO BIG DETECTION (after split) WARNING]: Too large detection found. Reset background");
+//				LiveMouseTracker.resetBackGround();
+//				break;
+//			}
+//		}
 		
 		// reject reflexion detection
 		//cage
