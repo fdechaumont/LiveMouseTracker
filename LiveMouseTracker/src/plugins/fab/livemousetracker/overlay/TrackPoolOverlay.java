@@ -311,7 +311,7 @@ public class TrackPoolOverlay extends Overlay {
 			 */
 
 			drawCenteredHint(gAbsolute,
-					"temp:"+ LiveMouseTracker.sensorMonitor.getTemperature() + " °C "+
+					"temp:"+ LiveMouseTracker.sensorMonitor.getTemperature() + " ï¿½C "+
 					"hum:"+LiveMouseTracker.sensorMonitor.getHumidity() + "% "+
 					"snd:"+LiveMouseTracker.sensorMonitor.getSoundLevel() + " "+
 					"light(all):"+LiveMouseTracker.sensorMonitor.getLightInfraredAndVisible() + " "+
@@ -486,6 +486,13 @@ public class TrackPoolOverlay extends Overlay {
 
 			int t = clock.getT() ;
 
+			int y = 10;
+			for ( Animal animal : animalPool.getAnimalList() )
+			{				
+				GraphicsUtil.drawHint( g, animal.getRfidID() + " " + animal.enabled, 100, y, Color.black, Color.orange );
+				y+=20;
+			}
+			
 			for ( Animal animal : animalPool.getAnimalList() )
 			{
 //				System.out.println("paint Animal " + animal.getName() );
@@ -567,7 +574,9 @@ public class TrackPoolOverlay extends Overlay {
 					{
 						g.setColor( animal.getColor() );
 						TrackSegment trackContainingDetection = animal.getTrackContainingDetection( lastDetection );
-						g.drawString( animal.getName() + " " + trackContainingDetection.nbFrameSinceLastRFIDReading
+						g.drawString( 
+								animal.getName() + " " + 
+						trackContainingDetection.nbFrameSinceLastRFIDReading
 								//trackContainingDetection.getIdentityAffectedBy()
 						//+" " + trackContainingDetection.getOrientationAffectedBy()
 						,

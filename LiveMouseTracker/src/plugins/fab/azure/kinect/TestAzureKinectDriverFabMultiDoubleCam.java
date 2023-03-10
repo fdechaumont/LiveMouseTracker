@@ -251,9 +251,11 @@ Camera 1 x:404 y:73 cropX: 213 cropY:133 cropW: 287 cropH:251
 Camera 2 x:640 y:-52 cropX: 163 cropY:0 cropW: 336 cropH:447
 
          */
-        cameraList.get(0).setData( -56,-71,0,1,472,468); 
-        cameraList.get(1).setData( 404, 73,213,133,287,251 ); 
-        cameraList.get(2).setData( 640 , -52 , 163, 0, 339 ,447 ); 
+        //cameraList.get(0).setData( 0,0,0,0,472,468); // 512,424
+        //cameraList.get(0).setData( -56,-71,0,1,472,468);
+        cameraList.get(0).setData( -56,-71,0,1,512,511);
+        //cameraList.get(1).setData( 404, 73,213,133,287,251 ); 
+        //cameraList.get(2).setData( 640 , -52 , 163, 0, 339 ,447 ); 
         
 
         
@@ -350,8 +352,8 @@ Camera 2 x:640 y:-52 cropX: 163 cropY:0 cropW: 336 cropH:447
 		}
 
 		// force dimension
-		maxMergeX = 980;
-		maxMergeY = 400;
+		//maxMergeX = 980;
+		//maxMergeY = 400;
 		
 		IcyBufferedImage infraImage = new IcyBufferedImage( maxMergeX, maxMergeY, 1 , DataType.USHORT );
 		IcyBufferedImage depthImage = new IcyBufferedImage( maxMergeX, maxMergeY, 1 , DataType.USHORT );

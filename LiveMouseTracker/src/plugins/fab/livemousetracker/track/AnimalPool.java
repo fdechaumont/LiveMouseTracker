@@ -30,29 +30,37 @@ import plugins.kernel.roi.roi2d.ROI2DRectangle;
 public class AnimalPool extends AbstractTrackPool {
 
 	public ArrayList<Animal> animalList = new ArrayList<Animal>();
+	
+	
 
 	public void addAnimal( Animal animal )
 	{
-//		System.out.println("AnimalPool : Add Animal " + animal );
-		animalList.add( animal );
-//		int index = animalList.indexOf( animal );
-		float h =0;
-		for ( Animal a : animalList ){
-			//a.color = Color.getHSBColor( animalList.indexOf( a )/(float)animalList.size(), 0.9f, 0.9f );
-			a.color = Color.getHSBColor( h, 0.9f, 0.9f );
-			h+= 2.4 * 1 / (Math.PI * 2f );
-		}
-//		switch( index )
-//		{
-//			case 0: animal.color= Color.red; break;
-//			case 1: animal.color= Color.green; break;
-//			case 2: animal.color= Color.blue; break;
-//			case 3: animal.color= Color.cyan; break;
-//		}
+		synchronized( animalList )
+		{
+	//		System.out.println("AnimalPool : Add Animal " + animal );
+			animalList.add( animal );
+	//		int index = animalList.indexOf( animal );
+			float h =0;
+			for ( Animal a : animalList ){
+				//a.color = Color.getHSBColor( animalList.indexOf( a )/(float)animalList.size(), 0.9f, 0.9f );
+				a.color = Color.getHSBColor( h, 0.9f, 0.9f );
+				h+= 2.4 * 1 / (Math.PI * 2f );
+			}
+	//		switch( index )
+	//		{
+	//			case 0: animal.color= Color.red; break;
+	//			case 1: animal.color= Color.green; break;
+	//			case 2: animal.color= Color.blue; break;
+	//			case 3: animal.color= Color.cyan; break;
+	//		}
+			}
 	}
 
 	public ArrayList<Animal> getAnimalList() {
-		return new ArrayList<Animal>( animalList );
+		synchronized( animalList )
+		{
+			return new ArrayList<Animal>( animalList );
+		}
 	}
 
 
@@ -212,9 +220,9 @@ public class AnimalPool extends AbstractTrackPool {
 	 */
 	public boolean setRFID(Animal animalWithDetection, String id) {
 
-		if ( animalWithDetection.getRfidID() != null ) // Animal has already an id.
+		if ( animalWithDetection.hasRfidID() ) // Animal has already an id.
 		{
-			System.err.println("[RFID + t:"+LiveMouseTracker.getT()+" ] Affectation Error: Animal has already an RFID");
+			System.err.println("[RFID + t:"+LiveMouseTracker.getT()+" ] Affectation Error: Animal has already an RFID. Existing: " + animalWithDetection.getRfidID() + " asked : " + id );
 			return false;
 		}
 
@@ -248,6 +256,7 @@ public class AnimalPool extends AbstractTrackPool {
 			String animalId = animal.getRfidID();
 			if ( animalId != null )
 			{
+				//System.out.println("------------ MATCH TEST: getAnimalWithRFID: " + animalId + " " + id + " : " + animalId.equals( id ) );
 				if ( animalId.equals( id ) )
 				{
 					return animal;
@@ -356,6 +365,92 @@ public class AnimalPool extends AbstractTrackPool {
 			if ( animal.getRfidID().contains("RFID") ) return animal;
 		}
 		return null;
+
+	}
+
+	public int getNumberOfAnimalToSearchFor() {
+		int nb = 0;
+		for ( Animal animal : this.animalList )
+		{
+			if ( animal.enabled )
+			{
+				nb++;
+			}
+		}
+		return nb;
+	}
+
+	public void addDynamicAnimal( String rfid ) {
+		
+		System.out.println( "--------------------------- CREATE DYNA ANIMAL " );
+		System.out.println("TODO TODAY CREATE DYNAMIC ANIMAL");
+		System.out.println("Creating new animal");
+		int i = this.getAnimalList().size();
+		Animal animal = new Animal( "DA_"+ i);
+		animal.setRfidID(rfid);					
+		this.addAnimal( animal );
+		
+		for ( Animal animal2 : this.getAnimalList() )
+		{
+			System.out.println( animal2 + " / " + animal2.getRfidID() );
+		}
+		System.out.println( "--------------------------- END CREATE DYNA ANIMAL" );
+		
+	}
+	
+	public void setRFIDAnimalEnabled(String rfid, boolean in ) {
+
+		if ( in )
+		{
+			boolean animalSet = false;
+			for ( Animal animal : this.animalList )
+			{
+				if ( animal.getRfidID().contains( rfid ) )
+				{
+					animal.setEnabled( true );
+					animalSet = true;
+				}
+			}
+			
+			if ( animalSet == false )
+			{
+				// this RFID is new. Should init an anonymous animal with it or create a new one.
+				//System.out.println("Animal was not set " );
+				boolean setOk = false;
+				for ( Animal animal : this.animalList )
+				{
+					System.out.println( "---------------" );
+					System.out.println( animal );
+					System.out.println( animal.getRfidID() );
+					if ( !animal.hasRfidID() ) // means it is not set yet
+					{
+						animal.setRfidID(rfid);
+						setOk = true;
+						break;
+					}
+				}
+				
+				if ( !setOk )
+				{
+					// Create dynamic animal.
+					System.out.println("Animal added by animalPool using remote identity UDP call: " + rfid );
+					this.addDynamicAnimal(rfid);
+				}
+				
+			}
+			
+		}
+		
+		if ( !in )
+		{			
+			for ( Animal animal : this.animalList )
+			{
+				if ( animal.getRfidID().contains( rfid ) )
+				{
+					animal.setEnabled( false );
+				}
+			}
+		}
 
 	}
 

@@ -69,6 +69,7 @@ import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 import icy.type.point.Point3D;
 import loci.formats.FormatException;
+import plugins.fab.azure.kinect.TestAzureKinectDriverFabMultiDoubleCam;
 //import plugins.fab.azure.kinect.TestAzureKinectDriverFab3D;
 //import plugins.fab.azure.kinect.TestAzureKinectDriverFabMultiDoubleCam;
 import plugins.fab.kinectdriver.KinectData;
@@ -114,6 +115,7 @@ import plugins.fab.livemousetracker.overlay.ThreadMonitorOverlay;
 import plugins.fab.livemousetracker.overlay.TrackPoolOverlay;
 import plugins.fab.livemousetracker.perf.PerformanceMonitor;
 import plugins.fab.livemousetracker.remote.event.UDPEventReceiver;
+import plugins.fab.livemousetracker.remote.remoteidentitycontrol.RFIDIdentityControl;
 import plugins.fab.livemousetracker.remote.rfidstop.RFIDRemoteStop;
 // UNRELEASED MULTI
 import plugins.fab.livemousetracker.remotearena.server.LMTRemoteAreaServer;
@@ -141,7 +143,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	String version = "2022 PREVIEW";
 	/** Warning: This depth sequence is the one from the kinect, It's not a Z-corrected version. Use LiveMouseTracker.depthImage instead */
-	public static final boolean DISPLAY_DEPTH_SEQUENCE = true;
+	public static final boolean DISPLAY_DEPTH_SEQUENCE = false;
 	public static final boolean DISPLAY_DIF_INFRA_SEQUENCE = false;
 	public static final boolean DISPLAY_DIF_DEPTH_SEQUENCE = false;
 	public static final boolean DISPLAY_TAIL_SEQUENCE = false;
@@ -288,7 +290,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static boolean TAIL_TRACKING_ASSOCIATION_TO_DETECTION_ENABLED = false;
 	public static boolean TAIL_FIT_ENABLED = false;
 
-	// FIXME: faire un enum de ces 2 strategies là.
+	// FIXME: faire un enum de ces 2 strategies lï¿½.
 	public static final boolean CREATE_NEW_TRACK_AFTER_SPLIT_WITH_ID_CONTINUITY = true;
 	public static final boolean USE_MACHINELEARNING_CACHE = true;
 	private static final boolean MANAGE_FRAME_DROP = false;
@@ -416,6 +418,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	}
 
 	RFIDRemoteStop rfidRemoteStop;
+	RFIDIdentityControl rfidRemoteIdentityControl;	
 	UDPEventReceiver udpEventReceiver;
 
 	/** images coming from local setup */
@@ -434,8 +437,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 	public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 
-	KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
-	//TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 3 );
+	//KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
+	TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 1 );
 
 	
 	public enum CRITICAL_LOOP_STEP
@@ -885,7 +888,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 						
 						if ( cageMode == CAGE_MODE.CLASSIC_16 )
 						{
-							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
+							// TODO TODAY : camera kinect v2
+							//infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
+							// TODO TODAY : camera kinect azure
+							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 3200 );
 						}
 						
 						if ( cageMode == CAGE_MODE.MULTI_CLASSIC_16 )
@@ -1441,17 +1447,17 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		// reject very big detection (after split) that can occur when nest is tracked/melt with animals
 		// or when the kinect is having problem
-//		for ( MouseDetection rawDetection : rawMouseDetectionList )
-//		{
-//			if ( rawDetection.getBooleanMask().bounds.getWidth() > 150
-//					|| rawDetection.getBooleanMask().bounds.getHeight() > 150
-//					)
-//			{
-//				System.out.println("[TOO BIG DETECTION (after split) WARNING]: Too large detection found. Reset background");
-//				LiveMouseTracker.resetBackGround();
-//				break;
-//			}
-//		}
+		for ( MouseDetection rawDetection : rawMouseDetectionList )
+		{
+			if ( rawDetection.getBooleanMask().bounds.getWidth() > 150
+					|| rawDetection.getBooleanMask().bounds.getHeight() > 150
+					)
+			{
+				System.out.println("[TOO BIG DETECTION (after split) WARNING]: Too large detection found. Reset background");
+				LiveMouseTracker.resetBackGround();
+				break;
+			}
+		}
 		
 		// reject reflexion detection
 		//cage
@@ -2099,7 +2105,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	private void postFilterNumberOfAnimals(
 			ArrayList<MouseDetection> rawMouseDetectionList) {
 
-		while ( rawMouseDetectionList.size() > MAX_NUMBER_OF_ANIMALS )
+		int maxNumberOfAnimalToSearchFor = trackContainer.animalTrackSegmentPool.getNumberOfAnimalToSearchFor();
+		while ( rawMouseDetectionList.size() > maxNumberOfAnimalToSearchFor )
 		{
 
 //			boolean allDetectionAreEvaluatedWithML = true;
@@ -2793,7 +2800,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		//System.out.println("*** TEST - COMPUTE SUB PARTS ***");
 		//Chronometer	computeSubPartChrono = new Chronometer("COMPUTE SUB PARTS");
 //		Message message = LiveMouseTracker.perfLogger.addMessage( new Message( "Refresh sub part classifier." ));
-		for ( Animal animal : getMainAnimalPool().animalList )
+		for ( Animal animal : getMainAnimalPool().getAnimalList() )
 		{
 			MachineLearningSubPartBuilder ml_spb = new MachineLearningSubPartBuilder();
 			if ( animal.getTrackSegments().size() == 0 )
@@ -3597,9 +3604,12 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			updateAllROICage();
 			
 		}
-		
+		*/
 		if ( cageMode == CAGE_MODE.CLASSIC_16 || cageMode == CAGE_MODE.RATS_25 )
 		{
+			ArrayList<ROI2D> cageFloorROIList = new ArrayList<ROI2D>();
+			
+			/*
 			ROI2DPolygon roiCage50x50 = new ROI2DPolygon( new Point2D.Double( 86-5+3, 55-5-17 ) );
 			roiCage50x50.addNewPoint( new Point2D.Double( 420+5+3, 55-5 -17), false);
 			roiCage50x50.addNewPoint( new Point2D.Double( 420+5+3, 395+5 -17), false);
@@ -3607,6 +3617,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			roiCage50x50.setCreating( false );
 
 			LiveMouseTracker.ROICage = roiCage50x50;
+			*/
 
 			ROI2DPolygon roiCage50x50Floor = new ROI2DPolygon( new Point2D.Double( 86-5+3 +30, 55-5-17 +30 ) );
 			roiCage50x50Floor.addNewPoint( new Point2D.Double( 420+5+3 -30 , 55-5 -17 +30 ), false);
@@ -3614,11 +3625,27 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			roiCage50x50Floor.addNewPoint( new Point2D.Double(  86-5+3 +30 , 395+5 -17 -30 ), false);
 			roiCage50x50Floor.setCreating( false );
 
-			LiveMouseTracker.ROICageFloor = roiCage50x50Floor;
+			//LiveMouseTracker.ROICageFloor = roiCage50x50Floor;
+			cageFloorROIList.add( roiCage50x50Floor );			
+			setROICageFloor( cageFloorROIList );
 
+			ROI2DArea roiCage = new ROI2DArea( cageFloorMask );
+			int dilatation = 20;
+			System.out.println("Dilatation of floor (nb pixels): " + dilatation );
+			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
+			roiCage= MorphoROITools.dilateROI( roiCage , dilatation, dilatation , 1 );			
+			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
+			roiCage.optimizeBounds();
+			
+			ArrayList<ROI2D> roiCageList = new ArrayList<ROI2D>();
+			roiCageList.add( roiCage );			
+			setROICage( roiCageList );
+			
+			
+			
 			updateAllROICage();
 		}
-		 */
+		 
 		
 		if ( cageMode == CAGE_MODE.SIMPLE_JEREMY  )
 		{
@@ -4009,6 +4036,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		{
 			rfidRemoteStop = new RFIDRemoteStop();
 			udpEventReceiver = new UDPEventReceiver();
+			rfidRemoteIdentityControl = new RFIDIdentityControl();
 		}
 		
 		// UNRELEASED MULTI
@@ -4176,6 +4204,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	private void saveTracks(boolean streamMode ) {
 		System.out.println("Saving all remaining tracks...");
 		Experiment experiment = new Experiment( LiveMouseTracker.BASE_FOLDER + getExperimentName() );
+		System.out.println("//////////////////***************** SAVING TRACKS TO DATABASE");
 		experiment.save( trackContainer , streamMode ) ; //getMainAnimalPool() , trackContainer.anonymousTrackSegmentPool );
 	}
 //

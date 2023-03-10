@@ -365,15 +365,17 @@ public class RFIDSolver2 {
 			LiveMouseTracker.addEventLogToDataBase( new EventLog( "RFID MISMATCH" , animalWithDetection ) );
 
 		}else
-		{
-			System.err.println("* [RFIDSOLVER 2] ");
+		{			
 			System.err.println("* [RFIDSOLVER 2]");
-			System.err.println("* [RFIDSOLVER 2]");
-			System.err.println("* [RFIDSOLVER 2]");
-			System.err.println("** This should not happend anymore. It is managed by the ASSIGN SCENARIO before.");
-
+			//System.err.println("** This should not happend anymore. It is managed by the ASSIGN SCENARIO before.");
+			String rfid = rfidEvent.getRFID();
+			System.err.println("** There is a new animal not expected.. adding animal and its rfid " + rfid );
+			LiveMouseTracker.getMainAnimalPool().addDynamicAnimal( rfid );
+			
+			
 			// No animal own this RFID
 			// So, this animal cannot be an animal who has already an RFID.
+			/*
 			String cannotBeString ="";
 			for ( Animal animal : LiveMouseTracker.getMainAnimalPool().getAnimalList() )
 			{
@@ -389,6 +391,7 @@ public class RFIDSolver2 {
 //			LiveMouseTracker.trackContainer.setTrackIdentity( trackRFID, animalOwningRFID, "RFID" );
 
 			LiveMouseTracker.addEventLogToDataBase( new EventLog( "RFID MISMATCH" , animalWithDetection ) );
+			*/
 		}
 
 

@@ -84,10 +84,11 @@ public class CalibrationPainter extends Overlay {
 			//g.drawRect( 112, 70, sequence.getWidth()-112*2, sequence.getHeight() -70*2 );
 			g.drawRect( 114, 63, 398-114, 353-63 );
 			
+			/*
 			int xOffset=512;
 			g.drawRect( 114+xOffset, 63, 398-114, 353-63 );
 			g.drawString( "50x50cm ground cage limits CAMERA 2.", 112+xOffset, 65 );
-
+			 */
 
 
 			//114, 63

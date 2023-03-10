@@ -19,7 +19,6 @@ package plugins.fab.livemousetracker;
 
 import java.awt.Color;
 import java.util.ArrayList;
-
 import icy.main.Icy;
 import icy.sequence.Sequence;
 import plugins.fab.livemousetracker.MPEGRecorder.MPEGMedaillonRecorder;
@@ -31,13 +30,14 @@ import weka.core.Instances;
 public class Animal {
 
 	String name;
-	String rfidID = null;
+	String rfidID = "RFID";
 
 	/** Track segment owned by the animal (sure) */
 	private ArrayList<TrackSegment> trackSegmentList = new ArrayList<TrackSegment>();
 	public Color color;
 	boolean identityConfirmedByRFID = false;
 	public Sequence medaillonSequence = null;
+	public boolean enabled = true; // this animal is enable, meaning that the tracking is allowed to seek for its presence. If not the animal should not be searched
 
 	public MPEGMedaillonRecorder mpegMedaillonRecorder;
 
@@ -158,7 +158,7 @@ public class Animal {
 					Thread.dumpStack();
 					// Pause to watch error.
 //					LiveMouseTracker.getKinectStreamer().stepPlay();
-					return;
+					//return;
 				}
 			}
 		}
@@ -354,7 +354,7 @@ public class Animal {
 	}
 
 	public boolean hasRfidID() {
-		if ( rfidID == null ) return false;
+		if ( rfidID.contains("RFID") ) return false;
 		return true;
 	}
 
@@ -388,6 +388,11 @@ public class Animal {
 
 	public void setTruePositiveRate(double value) {
 			this.truePositiveRate = value;
+	}
+
+	public void setEnabled(boolean b) {
+		this.enabled = b;		
+		System.out.println( this + " enabled = " + b );
 	}
 
 

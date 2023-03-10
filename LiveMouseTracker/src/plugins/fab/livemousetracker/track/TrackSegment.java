@@ -465,7 +465,21 @@ public class TrackSegment {
 	}
 
 	public ArrayList<Animal> getCannotBeAnimalList() {
+		
+		// build a tmp list of animal in which the not-enabled animals are listed so that the machine learning can't associate them.
+		ArrayList<Animal> tmpCannotBeAnimalList = new ArrayList<Animal>( this.cannotBeAnimalList );
+		
+		// adds the animals that are not enabled at the moment.
+		for ( Animal animal : LiveMouseTracker.trackContainer.animalTrackSegmentPool.getAnimalList() )
+		{
+			if ( animal.enabled == false )
+			{
+				tmpCannotBeAnimalList.add( animal );
+			}
+		}
+		
 		return cannotBeAnimalList;
+		
 	}
 
 	/**
