@@ -1404,7 +1404,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 			// check if detection is far too big and correspond to artefact of the kinect
 			// specifically the horizontal bar that can appear sometimes
-			/*
+			
 			if ( tooBigDetection.getBounds2D().getWidth() > 260 )
 			{
 				correctBackGround( depthImage , tooBigDetection.getBooleanMask( true ) );
@@ -1412,7 +1412,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				LiveMouseTracker.resetBackGround();
 				break;
 			}
-			*/
+			
 
 			if ( REJECT_DETECTION_IF_SPLIT )
 			{
