@@ -63,6 +63,21 @@ public class AnimalPool extends AbstractTrackPool {
 		}
 	}
 
+	public ArrayList<Animal> getAnimalListActive() {
+		ArrayList<Animal> animalListActive = new ArrayList<Animal>();
+		synchronized( animalList )
+		{
+			for ( Animal animal : animalList )
+			{
+				if ( animal.enabled )
+				{
+					animalListActive.add( animal );
+				}
+			}
+		}
+		return animalListActive;
+	}
+
 
 
 	public void addTrackSegment( Animal animal , TrackSegment trackSegment) {

@@ -1,0 +1,1 @@
+driver_v1.38_color_sub_on.exe >logCameraDriver.txt

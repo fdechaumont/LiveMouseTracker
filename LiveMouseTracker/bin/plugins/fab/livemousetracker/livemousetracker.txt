@@ -1,0 +1,38 @@
+TODO TODAY !!
+
+TODO TODAY: getMainAnimalPool().getAnimalList() synhchro check
+
+add an animalExpected List
+
+animal boolean enabled for search
+
+start with 6 animals
+
+todo:
+
+change medaillon to support 6 animals
+
+fake rfid data sender
+
+how to init ?
+
+enable the force rfid reading
+
+faire le nombre d'animaux e dynamqie ?
+
+
+
+init : mettre le nombre max d'animaux attendu ( ou passer en dynamique ? voir implications )
+passer à enabel
+si limite animaux / creation dynamqiue
+
+animalpool 376
+TODO TODAY CREATE DYNAMIC ANIMAL
+
+LMT_sendRFIDInArea > a mettre dans la porte directment
+
+rajouter un message d'eerur sur le driver camera non connecté
+
+camera sur carte USB3 ? Rallonge ?
+
+Si un animal est retrouvé par les RFID, le desengager ne sert à rien. 

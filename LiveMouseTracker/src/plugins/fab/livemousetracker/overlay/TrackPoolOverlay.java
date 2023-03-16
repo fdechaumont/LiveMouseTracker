@@ -487,9 +487,9 @@ public class TrackPoolOverlay extends Overlay {
 			int t = clock.getT() ;
 
 			int y = 100;
-			for ( Animal animal : animalPool.getAnimalList() )
+			for ( Animal animal : animalPool.getAnimalListActive() )
 			{				
-				GraphicsUtil.drawHint( g, animal.getRfidID() + ":" + animal.enabled, 100, y, Color.black, Color.orange );
+				GraphicsUtil.drawHint( g, animal.getRfidID(), 100, y, Color.black, Color.orange );
 				y+=20;
 			}
 			
@@ -677,11 +677,13 @@ public class TrackPoolOverlay extends Overlay {
 		//boolean DRAW_HUD = true;
 		if ( DRAW_HUD )
 		{
-			for ( Animal animal : animalPool.getAnimalList() )
+			int hudIndex = 0;
+			for ( Animal animal : animalPool.getAnimalListActive() )
 			{
 				Graphics2D gHud = (Graphics2D) g.create();
 
-				switch( animalPool.getAnimalList().indexOf( animal ) )
+				//switch( animalPool.getAnimalList().indexOf( animal ) )
+				switch( hudIndex )
 				{
 				case 0:
 					gHud.translate( 0 , 50 );
@@ -896,6 +898,7 @@ public class TrackPoolOverlay extends Overlay {
 
 
 				}
+				hudIndex++;
 			}
 
 		}

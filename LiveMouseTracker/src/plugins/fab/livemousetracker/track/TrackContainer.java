@@ -44,6 +44,12 @@ public class TrackContainer {
 	/** Provides identity to a track and remove it from anonymous to the pool of an animal */
 	public void setTrackIdentity( TrackSegment track , Animal animal, String setBy )
 	{
+		if ( animal.enabled == false )
+		{
+			System.out.println("ERROR: THIS ANIMAL IS NOT ENABLED AND CANNOT BE ID-ASSIGNED - reason: " + setBy );
+			Thread.dumpStack();
+			return;
+		}
 //		LiveMouseTracker.multiIdentityAgentManager.disableAllCurrentRunningAgent();
 		anonymousTrackSegmentPool.removeTrack( track );
 

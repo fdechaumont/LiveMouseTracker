@@ -161,7 +161,7 @@ public class Identifier extends Thread {
 			for ( TrackIdentityScorer tip : trackIdentityProblemList )
 			{
 				// first add all animals.
-				tip.getCandidateAnimalList().addAll( LiveMouseTracker.getMainAnimalPool().getAnimalList() );
+				tip.getCandidateAnimalList().addAll( LiveMouseTracker.getMainAnimalPool().getAnimalListActive() );
 
 				// then remove them if they are having a track at an overlapped time point with the problem.
 				for ( Animal animal : LiveMouseTracker.getMainAnimalPool().getAnimalList() )
