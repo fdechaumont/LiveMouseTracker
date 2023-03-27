@@ -66,7 +66,7 @@ public class RFIDIdentityControl extends Thread {
 					{					
 						// message should contain 'rfid in' or 'rfid out' and the RFID number into star (*) symbols
 						// example: rfid in *1234556778*
-						sentence = sentence.toLowerCase();
+						//sentence = sentence.toLowerCase();
 						LiveMouseTracker.addEventLogToDataBase( new EventLog( serverName + " " + sentence, null, LiveMouseTracker.getT() ));
 						String rfid = "";
 						//try {
@@ -77,14 +77,14 @@ public class RFIDIdentityControl extends Thread {
 //							System.out.println( serverName + ": Can't decode rfid in message");
 //							continue;
 //						}
-						
+
 						if ( sentence.contains("rfid in") )
 						{							
 							LiveMouseTracker.trackContainer.animalTrackSegmentPool.setRFIDAnimalEnabled( rfid , true );
 						}
 						if ( sentence.contains("rfid out") )
 						{
-										
+
 							LiveMouseTracker.trackContainer.animalTrackSegmentPool.setRFIDAnimalEnabled( rfid , false );
 						}
 					}

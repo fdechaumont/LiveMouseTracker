@@ -369,8 +369,9 @@ public class RFIDSolver2 {
 			System.err.println("* [RFIDSOLVER 2]");
 			//System.err.println("** This should not happend anymore. It is managed by the ASSIGN SCENARIO before.");
 			String rfid = rfidEvent.getRFID();
-			System.err.println("** There is a new animal not expected.. adding animal and its rfid " + rfid );
-			LiveMouseTracker.getMainAnimalPool().addDynamicAnimal( rfid );
+			System.err.println("** There is a new animal not expected.. adding animal and its rfid " + rfid );			
+			// uncomment this to let LMT add an animal
+			// LiveMouseTracker.getMainAnimalPool().addDynamicAnimal( rfid );
 			
 			
 			// No animal own this RFID

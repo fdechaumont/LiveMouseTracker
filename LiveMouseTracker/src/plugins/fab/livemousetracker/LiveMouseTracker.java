@@ -437,8 +437,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 	public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 
-	//KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
-	TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 1 );
+	KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
+	//TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 1 );
 
 	
 	public enum CRITICAL_LOOP_STEP
