@@ -687,6 +687,15 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		}
 
 	}
+	
+	public static void removeTrackerListener( LiveTrackerListener listener ) {
+
+		System.out.println("Tracker Listener removed.");
+		synchronized ( liveTrackerListenerArrayList ) {
+			liveTrackerListenerArrayList.remove( listener );
+		}
+
+	}
 
 	public static AnonymousPool errorDetectionTrackPool = new AnonymousPool( );
 

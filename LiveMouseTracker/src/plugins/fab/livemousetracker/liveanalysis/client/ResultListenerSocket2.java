@@ -19,6 +19,7 @@ package plugins.fab.livemousetracker.liveanalysis.client;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 
 import org.w3c.dom.Document;
@@ -109,9 +110,12 @@ public class ResultListenerSocket2 implements Runnable, LiveTrackerListener {
 				//			socket.close();
 
 
-			} catch (IOException | InterruptedException e) {
+			}// catch (IOException | InterruptedException e) {
+			    catch ( Exception e) {
 				e.printStackTrace();
-				System.out.println("TCP sending error: client disconnected ?");
+				System.out.println("TCP sending error: client disconnected ? - disconnecting");
+				LiveMouseTracker.removeTrackerListener( this );
+				break;
 			}
 		}
 
@@ -184,7 +188,7 @@ public class ResultListenerSocket2 implements Runnable, LiveTrackerListener {
 			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
 			transformer.transform(domSource, result);
 			String outToTCP = writer.toString();
-			System.out.println("XML IN String format is: \n" + outToTCP );
+			// System.out.println("XML IN String format is: \n" + outToTCP );
 			dataToSend = outToTCP;
 
 		} catch ( ParserConfigurationException | TransformerException e) {
