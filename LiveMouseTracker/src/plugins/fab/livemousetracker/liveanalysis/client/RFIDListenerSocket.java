@@ -67,7 +67,7 @@ public class RFIDListenerSocket implements Runnable, AntennaReadListener {
 		}
 		
 
-		System.out.println("Processing result listener.");
+		System.out.println("Processing rfid server listener.");
 
 		while( !LiveMouseTracker.performingShutDown )
 		{
