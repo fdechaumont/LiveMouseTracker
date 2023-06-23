@@ -97,6 +97,7 @@ import plugins.fab.livemousetracker.identity.DiadicBlackAndWhiteIdentity;
 import plugins.fab.livemousetracker.identity.MultiIdentityAgentManager;
 import plugins.fab.livemousetracker.listener.LiveTrackerListener;
 import plugins.fab.livemousetracker.liveanalysis.chronogram.ChronoConstant;
+import plugins.fab.livemousetracker.liveanalysis.client.LiveRFIDServer;
 import plugins.fab.livemousetracker.liveanalysis.client.NetworkResultServer;
 import plugins.fab.livemousetracker.machinelearning.MachineLearningDetectionFiltering;
 import plugins.fab.livemousetracker.machinelearning.MachineLearningMonitor;
@@ -141,7 +142,7 @@ import weka.core.Instances;
 public class LiveMouseTracker extends PluginActionable
 implements KinectListener, ActionListener, IcyFrameListener {
 
-	String version = "2022 PREVIEW";
+	String version = "2023 PREVIEW";
 	/** Warning: This depth sequence is the one from the kinect, It's not a Z-corrected version. Use LiveMouseTracker.depthImage instead */
 	public static final boolean DISPLAY_DEPTH_SEQUENCE = false;
 	public static final boolean DISPLAY_DIF_INFRA_SEQUENCE = false;
@@ -231,7 +232,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	// Option that are or will be integrated in the LiveKinect Driver part
 
 	// Public static final boolean FLIP_X_INPUT_ENABLED = true;
-	public static boolean COMPENSATE_Z_WITH_INTENSITY_ENABLED = false;
+	public static boolean COMPENSATE_Z_WITH_INTENSITY_ENABLED = true;
 	public static boolean TRACKING_ENABLED = true;
 
 	/** This value cannot change along time as inits will not be performed*/
@@ -260,7 +261,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	// detection
 
-	public static int DEPTH_SENSITIVITY = 5;
+	public static int DEPTH_SENSITIVITY = 14; // 5 (trop sensible)
 	/** If the detection contain more pixel than the MAX_SIZE_CANDIDATE, the detection is said "too big" to be a detection
 	 * and the system will try to split it.Should be learned. Should be smart to de activate if no mouse is missing,
 	 * and to activate if a mouse is too big and mice are missing.
@@ -429,13 +430,15 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	static public PerfLoggerOverlay perfLogger = null;
 
-	public enum CAGE_MODE { MULTI_CLASSIC_16, CLASSIC_16, RATS_25, SUPER_BLOCKS, MULTI_NICO, SIMPLE_JEREMY  } // MULTI_CLASSIC_16 = Philippe
+	public enum CAGE_MODE { MULTI_CLASSIC_16, CLASSIC_16, RATS_25,
+		SUPER_BLOCKS, MULTI_NICO, SIMPLE_JEREMY, BLOCK_50x50  } // MULTI_CLASSIC_16 = Philippe
 
 	
 	//boolean rat_mode = false;
 	//public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
-	public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
+	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
+	public static CAGE_MODE cageMode = CAGE_MODE.BLOCK_50x50;
 
 	KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
 	//TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 1 );
@@ -3227,7 +3230,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	 */
 	NetworkResultServer networkResultServer = null;
 	Thread networkResultServerThread = null;
-
+	
+	LiveRFIDServer liveRFIDServer = null;
+	Thread liveRFIDServerThread = null;
+	
 	private void init() {
 
 		TTL_SYNCHRO_ENABLED = guiPanel.getTimeSynchroArduinoTTLCheckBox().isSelected();
@@ -3654,7 +3660,49 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			
 			updateAllROICage();
 		}
-		 
+
+		if ( cageMode == CAGE_MODE.BLOCK_50x50 )
+		{
+			ArrayList<ROI2D> cageFloorROIList = new ArrayList<ROI2D>();
+			
+			/*
+			ROI2DPolygon roiCage50x50 = new ROI2DPolygon( new Point2D.Double( 86-5+3, 55-5-17 ) );
+			roiCage50x50.addNewPoint( new Point2D.Double( 420+5+3, 55-5 -17), false);
+			roiCage50x50.addNewPoint( new Point2D.Double( 420+5+3, 395+5 -17), false);
+			roiCage50x50.addNewPoint( new Point2D.Double(  86-5+3, 395+5 -17), false);
+			roiCage50x50.setCreating( false );
+
+			LiveMouseTracker.ROICage = roiCage50x50;
+			*/
+
+			ROI2DPolygon roiCage50x50Floor = new ROI2DPolygon( new Point2D.Double( 86-5+3 +30, 55-5-17 +30 ) );
+			roiCage50x50Floor.addNewPoint( new Point2D.Double( 420+5+3 -30 , 55-5 -17 +30 ), false);
+			roiCage50x50Floor.addNewPoint( new Point2D.Double( 420+5+3 -30 , 395+5 -17 -30 ), false);
+			roiCage50x50Floor.addNewPoint( new Point2D.Double(  86-5+3 +30 , 395+5 -17 -30 ), false);
+			roiCage50x50Floor.setCreating( false );
+
+			//LiveMouseTracker.ROICageFloor = roiCage50x50Floor;
+			cageFloorROIList.add( roiCage50x50Floor );			
+			setROICageFloor( cageFloorROIList );
+
+			ROI2DArea roiCage = new ROI2DArea( cageFloorMask );
+			int dilatation = 2;
+			System.out.println("Dilatation of floor (nb pixels): " + dilatation );
+			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
+			roiCage= MorphoROITools.dilateROI( roiCage , dilatation, dilatation , 1 );			
+			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
+			roiCage.optimizeBounds();
+			
+			ArrayList<ROI2D> roiCageList = new ArrayList<ROI2D>();
+			roiCageList.add( roiCage );			
+			setROICage( roiCageList );
+			
+			
+			
+			updateAllROICage();
+		}
+
+		
 		
 		if ( cageMode == CAGE_MODE.SIMPLE_JEREMY  )
 		{
@@ -3931,6 +3979,57 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			}
 			
 			
+			if ( cageMode == CAGE_MODE.BLOCK_50x50 )
+			{
+				// 114, 63
+				// 284 / 290
+				
+				// mid = 
+				
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+284/4  ,   95 ) , 30 , "COM30" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 256        ,   95 ) , 30 , "COM31" ) ); // mid
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+3*284/4,   95 ) , 30 , "COM32" ) ); // 
+
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 143  , 63+290/4 ) , 30 , "COM33" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 143  , 63+290/2 ) , 30 , "COM37" ) ); // mid
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 143  , 63+3*290/4 ) , 30 , "COM39" ) ); // 
+
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+284/4  ,   63+290/4 ) , 30 , "COM34" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+3*284/4  ,   63+290/4 ) , 30 , "COM35" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+284/4  ,   63+3*290/4 ) , 30 , "COM40" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+3*284/4  ,   63+3*290/4 ) , 30 , "COM41" ) ); // 
+
+				
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+284/4  ,   320 ) , 30 , "COM43" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 256        ,   320 ) , 30 , "COM44" ) ); // mid
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+3*284/4,   320 ) , 30 , "COM45" ) ); // 
+
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 360  , 63+290/4 ) , 30 , "COM36" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 360  , 63+290/2 ) , 30 , "COM38" ) ); // mid
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 360  , 63+3*290/4 ) , 30 , "COM42" ) ); // 
+
+				
+				//rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,   81 ) , 30 , "COM33" ) ); // 12
+
+				/*
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  166 ) , 30 , "COM34" ) ); // 24
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  166 ) , 30 , "COM35" ) ); // 26
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  166 ) , 30 , "COM36" ) ); // 17
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  166 ) , 30 , "COM37" ) ); // 11
+
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  249 ) , 30 , "COM38" ) ); // 20
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  249 ) , 30 , "COM39" ) ); // 19
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  249 ) , 30 , "COM40" ) ); // 16
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  249 ) , 30 , "COM41" ) ); // 14
+
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  336 ) , 30 , "COM42" ) ); // 21
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  336 ) , 30 , "COM43" ) ); // 22
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  336 ) , 30 , "COM44" ) ); // 15
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  336 ) , 30 , "COM45" ) ); // 18
+			*/
+			}
+			
+			
 			if ( cageMode == CAGE_MODE.MULTI_CLASSIC_16 )
 			{
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,   81 ) , 30 , "COM30" ) ); // 23
@@ -4040,6 +4139,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			networkResultServer = new NetworkResultServer();
 			networkResultServerThread = new Thread( networkResultServer );
 			networkResultServerThread.start();
+			
+			liveRFIDServer = new LiveRFIDServer();
+			liveRFIDServerThread = new Thread( liveRFIDServer );
+			liveRFIDServerThread.start();			
 		}
 
 		{

@@ -117,6 +117,13 @@ public class RemoteAntenna implements Antenna {
 			antennaReaderListenerList.add( rfidAntennaListener );
 		}
 	}
+	
+	public void removeRFIDAntennaListener( AntennaReadListener rfidAntennaListener )
+	{
+		synchronized ( antennaReaderListenerList ) {
+			antennaReaderListenerList.remove( rfidAntennaListener );
+		}
+	}
 
 	public void fireRFIDEvent( String rfid )
 	{

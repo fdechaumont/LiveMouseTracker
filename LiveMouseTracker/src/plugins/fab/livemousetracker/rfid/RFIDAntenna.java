@@ -433,6 +433,13 @@ public class RFIDAntenna extends Thread implements Antenna {
 			rfidAntennaListenerList.add( rfidAntennaListener );
 		}
 	}
+	
+	public void removeRFIDAntennaListener( AntennaReadListener rfidAntennaListener )
+	{
+		synchronized ( rfidAntennaListenerList ) {
+			rfidAntennaListenerList.remove( rfidAntennaListener );
+		}
+	}
 
 	public void fireRFIDEvent( AntennaReadEvent rfidEvent )
 	{

@@ -14,6 +14,7 @@ public interface Antenna {
 	public double readFrequency();
 
 	public void addRFIDAntennaListener( AntennaReadListener antennaReadListener );
+	public void removeRFIDAntennaListener( AntennaReadListener antennaReadListener );
 
 	public void switchOff();
 
