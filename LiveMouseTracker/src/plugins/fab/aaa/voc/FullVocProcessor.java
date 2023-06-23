@@ -32,7 +32,7 @@ public class FullVocProcessor {
 	boolean showSequence = true;
 	private static final boolean GENERATE_DENOISED_SPECTRUM_SEQUENCE = false; // false TODOTODAY
 	public static boolean SAVE_VOC_PATCHES = false;
-	public boolean MANAGE_GROUND_TRUTH = true;
+	public boolean MANAGE_GROUND_TRUTH = false;
 	public boolean clearWavDataAfterLoad = false; // false TODOTODAY
 	String htmlSaveFolder = null;
 	boolean closeAfterProcessing = false;
@@ -42,6 +42,7 @@ public class FullVocProcessor {
 	public boolean cancelFrequency = true;
 	public float MAX_GAP_DURATION_BETWEEN_SEQUENCE_TO_FUSE_VOC_IN_MS = 40f;
 	public int MIN_Y_IN_SPECTRUM = 100; // 100*300/512 = 58.57 kHz
+	int vocNumber = 0; // to number the voc even with the processPart.
 
 	public void setCloseAfterProcessing(boolean closeAfterProcessing) {
 		this.closeAfterProcessing = closeAfterProcessing;
@@ -182,6 +183,14 @@ public class FullVocProcessor {
 //		FamilyMaker fm = new FamilyMaker();
 //		fm.process( audioFile, audioVocDetection.getVocList(), fftProcessing );
 
+		// assign the index number to vocs
+		
+		for ( Voc voc : audioVocDetection.getVocList() ) // this is the vocs found in this part
+		{
+			voc.vocNumber = this.vocNumber;
+			this.vocNumber++; // this is a global counter over parts
+		}
+		
 		if ( showSequence )
 		{
 			fireStatusToAnalysisListener("Rendering spectrogram with overlayed data...");

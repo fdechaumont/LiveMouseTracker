@@ -343,7 +343,8 @@ public class VocalizationOverlay extends Overlay {
                 + "\n power: " + voc.meanPower
                 + "\n freq TV: " + voc.getFrequencyTVInHz()
 
-                + "\n\n#"+vocList.indexOf( voc), voc.getCenterX(), locY, color, Color.black );
+                + "\n\n#"+voc.vocNumber, voc.getCenterX(), locY, color, Color.black );
+                //+ "\n\n#"+vocList.indexOf( voc), voc.getCenterX(), locY, color, Color.black );
 
         {
             int y = 350;
@@ -647,8 +648,8 @@ public class VocalizationOverlay extends Overlay {
 //                        "Modulation index: "+ voc.nbModulation
 //                        + "\nnb pt Harmonics: " + voc.pointListHarmonics.size()
 //                        + "\nnb power: " + voc.meanPower
-
-                        "# "+vocList.indexOf( voc), voc.getCenterX(), locY, voc.color, Color.black );
+                        //"# "+vocList.indexOf( voc), voc.getCenterX(), locY, voc.color, Color.black );
+                		"# "+voc.vocNumber, voc.getCenterX(), locY, voc.color, Color.black );
 
                 for ( String string : voc.getClassificationDescription() )
                 {

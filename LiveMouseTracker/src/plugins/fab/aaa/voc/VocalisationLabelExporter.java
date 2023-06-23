@@ -29,7 +29,7 @@ public class VocalisationLabelExporter {
 				result+= "Exp:" + tab + audioFile.file.getAbsolutePath() + eol;
 			}
 
-			int i = 0;
+			//int i = 0;
 			String columnHeader = "";
 			String result2 = "";
 
@@ -38,7 +38,7 @@ public class VocalisationLabelExporter {
 				columnHeader = "";
 
 				columnHeader+= "Voc number"+tab;
-				result2+=""+i+tab;
+				result2+=""+voc.vocNumber+tab;
 
 				columnHeader+= "nbPointDefined"+tab;
 				result2+= voc.pointList.size() + tab;
@@ -145,7 +145,7 @@ public class VocalisationLabelExporter {
 //				fw.write( "isInBadRepeat:"+tab + voc.isInBadRepeat + tab);
 
 				result2+=eol;
-				i++;
+				//i++;
 //				fw.write( eol );
 			}
 

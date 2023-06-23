@@ -27,6 +27,7 @@ public class Voc {
 	public float peakPower = 0;
 	public float peakFrequency = 0;
 	public float minPower = 0;
+	public int vocNumber = 0;
 
     ArrayList<String> classificationDescription = new ArrayList<String>();
 
