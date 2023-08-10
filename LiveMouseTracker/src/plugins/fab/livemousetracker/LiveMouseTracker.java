@@ -3645,7 +3645,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			setROICageFloor( cageFloorROIList );
 
 			ROI2DArea roiCage = new ROI2DArea( cageFloorMask );
-			int dilatation = 20;
+			int dilatation = 10;
 			System.out.println("Dilatation of floor (nb pixels): " + dilatation );
 			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
 			roiCage= MorphoROITools.dilateROI( roiCage , dilatation, dilatation , 1 );			
@@ -4004,9 +4004,9 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 256        ,   320 ) , 30 , "COM44" ) ); // mid
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+3*284/4,   320 ) , 30 , "COM45" ) ); // 
 
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 360  , 63+290/4 ) , 30 , "COM36" ) ); // 
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 360  , 63+290/2 ) , 30 , "COM38" ) ); // mid
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 360  , 63+3*290/4 ) , 30 , "COM42" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 370  , 63+290/4 ) , 30 , "COM36" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 370  , 63+290/2 ) , 30 , "COM38" ) ); // mid
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 370  , 63+3*290/4 ) , 30 , "COM42" ) ); // 
 
 				
 				//rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,   81 ) , 30 , "COM33" ) ); // 12
