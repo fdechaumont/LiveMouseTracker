@@ -265,7 +265,10 @@ public class LiveDataPlayer extends PluginActionable implements IcyFrameListener
 	}
 
 	private void connect() {
-		connection = DataUtil.connectDataBase( connection, dataBaseFile );
+		if ( connection == null )
+		{
+			connection = DataUtil.connectDataBase( connection, dataBaseFile );
+		}
 
 	}
 
@@ -1163,6 +1166,10 @@ public class LiveDataPlayer extends PluginActionable implements IcyFrameListener
 //			ArrayList<MouseDetectionX> newDetection = new ArrayList<MouseDetectionX>();
 //			ArrayList<MouseDetectionX> removedDetection = new ArrayList<MouseDetectionX>();
 
+			if ( connection == null )
+			{
+				connect();
+			}
 			for ( MouseDetectionX detection : detectionList )
 			{
 				if ( detection.mouseDetection.getT() <= endFrame && detection.mouseDetection.getT() >= startFrame )
@@ -1183,7 +1190,6 @@ public class LiveDataPlayer extends PluginActionable implements IcyFrameListener
 				    	String sql = "UPDATE DETECTION SET ANIMALID=? WHERE ID=?";
 				    	PreparedStatement ps;
 				    	try {
-
 				    		ps = connection.prepareStatement( sql );
 				    		ps.setInt( 1 , detection.animalId );
 				    		ps.setLong( 2 , detection.dataBaseId );
@@ -1197,8 +1203,9 @@ public class LiveDataPlayer extends PluginActionable implements IcyFrameListener
 
 					}
 				}
-				refresh();
 			}
+			//closeConnect();
+			refresh();
 
 		}
 

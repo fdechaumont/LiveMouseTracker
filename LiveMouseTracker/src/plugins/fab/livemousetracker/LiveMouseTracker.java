@@ -3994,10 +3994,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 143  , 63+290/2 ) , 30 , "COM37" ) ); // mid
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 143  , 63+3*290/4 ) , 30 , "COM39" ) ); // 
 
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+284/4  ,   63+290/4 ) , 30 , "COM34" ) ); // 
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+3*284/4  ,   63+290/4 ) , 30 , "COM35" ) ); // 
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+284/4  ,   63+3*290/4 ) , 30 , "COM40" ) ); // 
-				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+3*284/4  ,   63+3*290/4 ) , 30 , "COM41" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 217, 170 ) , 30 , "COM34" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 289, 170 ) , 30 , "COM35" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 217, 240 ) , 30 , "COM40" ) ); // 
+				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 289, 240 ) , 30 , "COM41" ) ); // 
 
 				
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+284/4  ,   320 ) , 30 , "COM43" ) ); // 
