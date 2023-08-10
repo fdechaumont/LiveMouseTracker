@@ -45,8 +45,8 @@ public class LiveMouseTrackerCalibration extends PluginActionable implements Kin
 	public static IcyBufferedImage infraImage;
 	public static IcyBufferedImage depthImage;
 	CalibrationPainter calibrationPainter = new CalibrationPainter();
-	//KinectStreamer kinectStreamer = new KinectStreamer( false );
-	TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 1 );
+	KinectStreamer kinectStreamer = new KinectStreamer( false );
+	//TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 1 );
 
 	@Override
 	public void run() {
