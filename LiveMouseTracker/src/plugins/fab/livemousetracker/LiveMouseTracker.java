@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.sql.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Random;
@@ -417,6 +419,14 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static Sequence getThermalSequence() {
 		return thermalSequence;
 	}
+	
+	public static void log( String log )
+	{
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
+		LocalDateTime now = LocalDateTime.now();  
+		System.out.println( dtf.format(now ) + ":" + log );  
+	}
+	
 
 	RFIDRemoteStop rfidRemoteStop;
 	RFIDIdentityControl rfidRemoteIdentityControl;	
@@ -1077,7 +1087,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		lastMainThreadComputationTimeMs = (int) ( System.currentTimeMillis() - milliCriticalLoop );
 		if ( lastMainThreadComputationTimeMs > 30 )
 		{
-			System.out.println("COMPUTATION WARNING: lastMainThreadComputationTimeMs > 30ms. Frame: " + getT() + " - " + lastMainThreadComputationTimeMs + " ms");
+			LiveMouseTracker.log("COMPUTATION WARNING: lastMainThreadComputationTimeMs > 30ms. Frame: " + getT() + " - " + lastMainThreadComputationTimeMs + " ms");
 		}
 
 		fireEndOfFrameEvent();
@@ -1642,6 +1652,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			watchdogThread = Util.runSingle( "watchdog", watchdogThread , watchdogRunnable );
 		}
 */
+		if ( t % 25000 == 0 )
+		{
+			log( "current time log");
+		}
+		
 		if ( t % 1000 == 0 )
 		{
 			threadExecutor.execute( new Runnable() {
@@ -3236,6 +3251,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	
 	private void init() {
 
+		LiveMouseTracker.log("Init");
 		TTL_SYNCHRO_ENABLED = guiPanel.getTimeSynchroArduinoTTLCheckBox().isSelected();
 		TTL_EVENT_LISTENER_ENABLED = guiPanel.getManageEventFromArduinoTTL().isSelected();
 
@@ -3686,7 +3702,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			setROICageFloor( cageFloorROIList );
 
 			ROI2DArea roiCage = new ROI2DArea( cageFloorMask );
-			int dilatation = 2;
+			int dilatation = 10;
 			System.out.println("Dilatation of floor (nb pixels): " + dilatation );
 			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
 			roiCage= MorphoROITools.dilateROI( roiCage , dilatation, dilatation , 1 );			

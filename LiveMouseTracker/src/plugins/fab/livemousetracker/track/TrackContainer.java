@@ -46,8 +46,8 @@ public class TrackContainer {
 	{
 		if ( animal.enabled == false )
 		{
-			System.out.println("ERROR: THIS ANIMAL IS NOT ENABLED AND CANNOT BE ID-ASSIGNED - reason: " + setBy );
-			Thread.dumpStack();
+			System.out.println("ERROR: THIS ANIMAL IS NOT ENABLED AND CANNOT BE ID-ASSIGNED - reason: " + setBy + " RFID: " + animal.getRfidID() );
+			//Thread.dumpStack();
 			return;
 		}
 //		LiveMouseTracker.multiIdentityAgentManager.disableAllCurrentRunningAgent();

@@ -113,7 +113,7 @@ public class ResultListenerSocket2 implements Runnable, LiveTrackerListener {
 			}// catch (IOException | InterruptedException e) {
 			    catch ( Exception e) {
 				e.printStackTrace();
-				System.out.println("TCP sending error: client disconnected ? - disconnecting");
+				LiveMouseTracker.log("TCP sending error: client disconnected ? - disconnecting");
 				LiveMouseTracker.removeTrackerListener( this );
 				break;
 			}
@@ -124,11 +124,14 @@ public class ResultListenerSocket2 implements Runnable, LiveTrackerListener {
 			DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
 			dataOutputStream.writeUTF( "<root><end></root>" );
 			dataOutputStream.flush(); // send the message
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
 			socket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	@Override

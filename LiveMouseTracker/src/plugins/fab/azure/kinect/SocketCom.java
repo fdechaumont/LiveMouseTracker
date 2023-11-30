@@ -215,12 +215,34 @@ public class SocketCom
         try
         {
             out.close();
-            in.close();
-            socket.close();
         }
         catch (IOException e)
         {
             System.out.println(e.getMessage());
         }
+
+
+        try
+        {
+            in.close();
+        }
+        catch (IOException e)
+        {
+            System.out.println(e.getMessage());
+        }
+
+
+        try
+        {
+        	socket.close();
+        }
+        catch (IOException e)
+        {
+            System.out.println(e.getMessage());
+        }
+
+        
+        
+    
     }
 }
