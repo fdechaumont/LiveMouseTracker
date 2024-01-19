@@ -137,6 +137,7 @@ public class Animal {
 		return false;
 	}
 
+	// return False in case of failure
 	public void addTrackSegment( TrackSegment ts , boolean securityCheck )
 	{
 		// Slow security that should be removed in production.
@@ -146,6 +147,15 @@ public class Animal {
 			{
 				if ( ts.overlapInT( ts1 ) )
 				{
+					// problem can be caused by the long process of saving. The save process works
+					// on a copy of the track, while the tracking is still working, therefore the
+					// splits in breakTooLongTrack( TrackContainer.java:331 ) can be out of sync.
+					// FIXED by putting the split in the main thread at livemousetracker.java:LiveMouseTracker.trackContainer.breakTooLongTrack( getFilterUpperFrameLimit() )
+					
+					// the problem may also come from splitAnimalTrack(TrackContainer.java:175)
+					
+					// and .setTrackIdentity(TrackContainer.java:72)
+					
 					System.err.println("------------------------------------------");
 					System.err.println("ADD TRACK SEGMENT TO ANIMAL ERROR: OVERLAP");
 					System.err.println("Animal: " + getName() );
@@ -153,12 +163,22 @@ public class Animal {
 					System.err.println("Track to add last det: " + ts.getDetection( ts.getLastTimePoint() ) );
 					System.err.println("Track conflicting: " + ts1 );
 					System.err.println("Track conflicting last det: " + ts1.getDetection( ts1.getLastTimePoint() ) );
-					System.err.println("------------------------------------------");
+					
+					
+					
 					// Print stackTrace
+					System.err.println("DUMP STACK:");
 					Thread.dumpStack();
+					
+					System.err.println("removing conflicting track.");
+					removeTrackSegment( ts1 );
+					System.err.println("------------------------------------------");
+					
+					
 					// Pause to watch error.
 //					LiveMouseTracker.getKinectStreamer().stepPlay();
 					//return;
+					
 				}
 			}
 		}
@@ -166,6 +186,8 @@ public class Animal {
 		synchronized ( trackSegmentList ) {
 			trackSegmentList.add( ts );
 		}
+
+
 
 	}
 

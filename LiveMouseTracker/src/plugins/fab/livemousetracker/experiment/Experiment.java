@@ -246,7 +246,8 @@ public class Experiment {
 			Connection connection = connectDataBase();
 			connection.setAutoCommit( false );
 
-			LiveMouseTracker.trackContainer.breakTooLongTrack( getFilterUpperFrameLimit() );
+			// This is moved to the main thread because track may change while this part of code is called
+			// LiveMouseTracker.trackContainer.breakTooLongTrack( getFilterUpperFrameLimit() );
 
 			saveAnimals(connection, trackContainer );
 			saveFrameData( connection, trackContainer, streamSave );
@@ -340,7 +341,7 @@ public class Experiment {
 
 		Integer startFrame = trackContainer.getFirstDetectionT();
 		System.out.println("Save Event start frame: " + startFrame );
-		Integer endFrame = getFilterUpperFrameLimit();
+		Integer endFrame = LiveMouseTracker.getFilterUpperFrameLimit();
 
 		if ( !streamSave )
 		{
@@ -999,17 +1000,14 @@ public class Experiment {
 //		return false;
 	}
 
-	private int getFilterUpperFrameLimit()
-	{
-		return LiveMouseTracker.getT() - LiveMouseTracker.NUMBER_OF_FRAME_BEFORE_SEND_DATA_TO_STREAM;
-	}
+	
 
 	/** return true if time point must be filtered (i.e. not recorded )*/
 	private boolean filterTimePoint( int t , boolean streamMode )
 	{
 		if ( !streamMode ) return false; // if we are not in stream mode, say filter nothing.
 
-		if ( t > getFilterUpperFrameLimit() ) //LiveMouseTracker.getT() - LiveMouseTracker.NUMBER_OF_FRAME_BEFORE_SEND_DATA_TO_STREAM )
+		if ( t > LiveMouseTracker.getFilterUpperFrameLimit() ) //LiveMouseTracker.getT() - LiveMouseTracker.NUMBER_OF_FRAME_BEFORE_SEND_DATA_TO_STREAM )
 		{
 			return true;
 		}

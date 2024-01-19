@@ -1289,6 +1289,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	//static public PerformanceMonitor performanceMonitor;
 
+	public static int getFilterUpperFrameLimit()
+	{
+		return getT() - NUMBER_OF_FRAME_BEFORE_SEND_DATA_TO_STREAM;
+	}
+	
 	private void processCurrentT() {
 
 		int t = clock.getT();
@@ -1681,6 +1686,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		// Save data in streaming.
 		if ( t % 500 == 0 && guiPanel.getStreamToSQLCheckBox().isSelected() )
 		{
+			// should break tracks here in the main thread
+			// FIXME: put this back to the thread to avoid the delay.
+			// FIXME: TO TEST IN OUR SYSTEMS
+			LiveMouseTracker.trackContainer.breakTooLongTrack( getFilterUpperFrameLimit() );
+			
 			threadExecutor.execute( new Runnable() {
 				@Override
 				public void run() {

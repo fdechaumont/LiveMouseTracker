@@ -62,7 +62,7 @@ public class TrackContainer {
 		{
 			if ( track.overlapInT( animalTrack ) )
 			{
-				//System.err.println("[SET TRACK IDENTITY ERROR: SEVERAL ANIMALS WITH SAME IDENTITY]");
+				System.err.println("[SET TRACK IDENTITY ERROR: SEVERAL ANIMALS WITH SAME IDENTITY]");
 				Thread.dumpStack();
 				//System.out.println("Correcting...");
 				LiveMouseTracker.trackContainer.setTrackAnonymous( animal , animalTrack );
