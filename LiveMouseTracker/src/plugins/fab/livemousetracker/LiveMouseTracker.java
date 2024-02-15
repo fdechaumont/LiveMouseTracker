@@ -30,8 +30,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.sql.Date;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Random;
@@ -41,8 +39,24 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.joda.time.DateTime;
+
+import java.io.File;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 
 import icy.file.FileUtil;
 import icy.file.Saver;
@@ -70,6 +84,7 @@ import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
 import icy.type.point.Point3D;
+import icy.util.XMLUtil;
 import loci.formats.FormatException;
 import plugins.fab.azure.kinect.TestAzureKinectDriverFabMultiDoubleCam;
 //import plugins.fab.azure.kinect.TestAzureKinectDriverFab3D;
@@ -144,7 +159,7 @@ import weka.core.Instances;
 public class LiveMouseTracker extends PluginActionable
 implements KinectListener, ActionListener, IcyFrameListener {
 
-	String version = "2023 PREVIEW";
+	String version = "2024 PREVIEW";
 	/** Warning: This depth sequence is the one from the kinect, It's not a Z-corrected version. Use LiveMouseTracker.depthImage instead */
 	public static final boolean DISPLAY_DEPTH_SEQUENCE = false;
 	public static final boolean DISPLAY_DIF_INFRA_SEQUENCE = false;
@@ -419,14 +434,13 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static Sequence getThermalSequence() {
 		return thermalSequence;
 	}
-	
+
 	public static void log( String log )
 	{
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");  
 		LocalDateTime now = LocalDateTime.now();  
 		System.out.println( dtf.format(now ) + ":" + log );  
 	}
-	
 
 	RFIDRemoteStop rfidRemoteStop;
 	RFIDIdentityControl rfidRemoteIdentityControl;	
@@ -441,7 +455,9 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	static public PerfLoggerOverlay perfLogger = null;
 
 	public enum CAGE_MODE { MULTI_CLASSIC_16, CLASSIC_16, RATS_25,
-		SUPER_BLOCKS, MULTI_NICO, SIMPLE_JEREMY, BLOCK_50x50  } // MULTI_CLASSIC_16 = Philippe
+		SUPER_BLOCKS, MULTI_NICO, SIMPLE_JEREMY, BLOCK_50x50, 
+		USER // looking for XML file for setup
+		} // MULTI_CLASSIC_16 = Philippe
 
 	
 	//boolean rat_mode = false;
@@ -619,9 +635,19 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	@Override
 	public void run() {
 
+		
+		/*
+		System.out.println("TO REMOVE !!");
+		loadConfigFile(); // TO REMOVE : should be in init
+		System.out.println("TO REMOVE !!");
+		*/
+		
+		
 		System.out.println("Starting Live Mouse Tracker version " + version );
 		new SerialDriverPlugin();
 
+		
+		
 		/*
 		 * PUTBACK
 		if ( !checkIfLMTHasBeenLaunchedWithTheBatchFile() )
@@ -1087,7 +1113,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		lastMainThreadComputationTimeMs = (int) ( System.currentTimeMillis() - milliCriticalLoop );
 		if ( lastMainThreadComputationTimeMs > 30 )
 		{
-			LiveMouseTracker.log("COMPUTATION WARNING: lastMainThreadComputationTimeMs > 30ms. Frame: " + getT() + " - " + lastMainThreadComputationTimeMs + " ms");
+			System.out.println("COMPUTATION WARNING: lastMainThreadComputationTimeMs > 30ms. Frame: " + getT() + " - " + lastMainThreadComputationTimeMs + " ms");
 		}
 
 		fireEndOfFrameEvent();
@@ -1689,7 +1715,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			// should break tracks here in the main thread
 			// FIXME: put this back to the thread to avoid the delay.
 			// FIXME: TO TEST IN OUR SYSTEMS
-			LiveMouseTracker.trackContainer.breakTooLongTrack( getFilterUpperFrameLimit() );
+			//LiveMouseTracker.trackContainer.breakTooLongTrack( getFilterUpperFrameLimit() );
 			
 			threadExecutor.execute( new Runnable() {
 				@Override
@@ -1799,7 +1825,15 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			}
 		}
 
-		mpegTimeLapseRecorder.recordMP4TimeLapse();
+		if ( mpegTimeLapseRecorder != null )
+		{
+			mpegTimeLapseRecorder.recordMP4TimeLapse();
+		}
+		if ( mpegTimeLapseRecorderWithoutOverlay != null )
+		{			
+			mpegTimeLapseRecorderWithoutOverlay.recordMP4TimeLapse();
+		}
+		
 		//performanceMonitor.stepDone("Record MPEG");
 		/* THERMAL
 		if ( thermalSequence != null )
@@ -2001,8 +2035,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	Sequence backgroundSequenceRevert = null;
 
 //	Thread computeSubPartClassifierThread = null;
-	MPEGTimeLapseRecorder mpegTimeLapseRecorder = new MPEGTimeLapseRecorder();
+	
+	MPEGTimeLapseRecorder mpegTimeLapseRecorder = null;
+	MPEGTimeLapseRecorder mpegTimeLapseRecorderWithoutOverlay = null;
 
+	
 	/* THERMAL
 	MPEGTimeLapseThermalRecorder mpegTimeLapseThermalRecorder = null;
 	 */
@@ -3260,8 +3297,17 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	Thread liveRFIDServerThread = null;
 	
 	private void init() {
-
-		LiveMouseTracker.log("Init");
+		
+		if ( LiveMouseTracker.guiPanel.getSaveToMp4CheckBox().isSelected() )
+		{
+			mpegTimeLapseRecorder = new MPEGTimeLapseRecorder("video_t" , true );
+		}
+		
+		if ( LiveMouseTracker.guiPanel.getSaveToMp4WithoutOverlayCheckBox().isSelected() )
+		{
+			mpegTimeLapseRecorderWithoutOverlay = new MPEGTimeLapseRecorder("video_noOverlay_t", false );
+		}		
+		
 		TTL_SYNCHRO_ENABLED = guiPanel.getTimeSynchroArduinoTTLCheckBox().isSelected();
 		TTL_EVENT_LISTENER_ENABLED = guiPanel.getManageEventFromArduinoTTL().isSelected();
 
@@ -3307,6 +3353,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		aviSoftEventReceiver = new AviSoftEventReceiver();
 
+		
+		
 		/* THERMAL
 			thermalCameraCapture = new ThermalCameraCapture( thermalSequence );
 			if ( thermalCameraCapture.isThermalCameraPresent() )
@@ -3431,6 +3479,12 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		depthOut.removeAllROI();
 		infraOut.removeAllROI();
 
+		if ( RFID_ENABLED )
+		{
+			rfidManager = new RFIDManager2();
+		}
+		
+		loadUserConfigFile();
 
 		// Cage extended is the area where the animal can climb.
 //		ROI2DPolygon roiCage = new ROI2DPolygon( new Point2D.Double( 86-5, 55-5 ) );
@@ -3480,9 +3534,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		if ( cageMode == CAGE_MODE.MULTI_CLASSIC_16 )
 		{
 			int shiftX = 506+23+6;
+
 			
 
 			ROI2DPolygon roiCage50x50_A = new ROI2DPolygon( new Point2D.Double( 86-5+3 +30, 55-5-17 +30 ) );
+			
 			roiCage50x50_A.addNewPoint( new Point2D.Double( 420+5+3 -30 , 55-5 -17 +30 ), false);
 			roiCage50x50_A.addNewPoint( new Point2D.Double( 420+5+3 -30 , 395+5 -17 -30 ), false);
 			roiCage50x50_A.addNewPoint( new Point2D.Double(  86-5+3 +30 , 395+5 -17 -30 ), false);
@@ -3712,7 +3768,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			setROICageFloor( cageFloorROIList );
 
 			ROI2DArea roiCage = new ROI2DArea( cageFloorMask );
-			int dilatation = 10;
+			int dilatation = 2;
 			System.out.println("Dilatation of floor (nb pixels): " + dilatation );
 			System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
 			roiCage= MorphoROITools.dilateROI( roiCage , dilatation, dilatation , 1 );			
@@ -3863,7 +3919,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		if ( RFID_ENABLED )
 		{
-			rfidManager = new RFIDManager2();
+			//rfidManager = new RFIDManager2();
 //			rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 250, 85 ), 20 , "COM4" ) );
 //			rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 250, 330 ), 20 , "COM3" ) );
 
@@ -4219,6 +4275,179 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	}
 
+	private void loadUserConfigFile() {
+
+		// loading custom configuration file lmt-config.xml
+		System.out.println("Checking user lmt config file...");
+		File file = new File( FileUtil.getApplicationDirectory() + FileUtil.separator +  "lmt-config.xml");		
+		System.out.println( file );
+		if ( !file.exists() )
+		{
+			System.out.println("No user config file to process.");
+			return;
+		}
+		
+		System.out.println("Loading user config.");
+		this.cageMode = CAGE_MODE.USER;
+		
+		Document xmlDocument = XMLUtil.loadDocument( file );
+		Element cagefloorElement = XMLUtil.getElement( xmlDocument.getDocumentElement(), "cagefloor" );
+		
+		System.out.println( cagefloorElement );
+		
+		ArrayList<Element> polygons = XMLUtil.getElements( cagefloorElement , "polygon" );
+		
+		ArrayList<ROI2D> roiFloorList = new ArrayList<ROI2D>();
+		ArrayList<ROI2D> roiCageList = new ArrayList<ROI2D>();
+		
+		for ( Element polygon : polygons )
+		{
+			Attr wallSize = XMLUtil.getAttribute( polygon, "wallsize" );
+			
+			ROI2DPolygon roiFloor = null; 
+			
+			ArrayList<Element> points = XMLUtil.getElements( polygon , "point" );
+			
+			for ( Element point : points )
+			{
+				Attr x = XMLUtil.getAttribute( point, "x" );
+				Attr y = XMLUtil.getAttribute( point, "y" );
+				System.out.println( x.getValue() );
+				System.out.println( y.getValue() );
+				
+				if ( roiFloor ==null )
+				{
+					roiFloor = new ROI2DPolygon( new Point2D.Double( Double.parseDouble( x.getValue() ) , Double.parseDouble( y.getValue() ) ) );
+					continue;
+				}
+				
+				roiFloor.addNewPoint( new Point2D.Double( Double.parseDouble( x.getValue() ) , Double.parseDouble( y.getValue() ) ), false);
+			}
+			roiFloor.setCreating( false );
+			roiFloorList.add( roiFloor );
+			System.out.println( roiFloor );
+			
+			int dilatation = 0;
+			if ( wallSize != null )
+			{
+				dilatation = Integer.parseInt( wallSize.getValue() );
+			}
+			// dilate floor ROI			
+			{				
+				ROI2DArea roiCage = new ROI2DArea( roiFloor.getBooleanMask( true ) );
+				System.out.println("Dilatation of floor (nb pixels): " + dilatation );
+				roiCage= MorphoROITools.dilateROI( roiCage , dilatation, dilatation , 1 );
+				
+				roiCage.optimizeBounds();
+				roiCageList.add( roiCage );				
+			}
+			
+			System.out.println( polygon );
+		}
+		
+		
+		setROICageFloor( roiFloorList );
+		setROICage(roiCageList);
+		
+		//System.exit( 0 );
+		
+		// reads antenna
+		
+		
+		ArrayList<Element> antennaElementList = XMLUtil.getElements( xmlDocument.getDocumentElement(), "antenna" );
+		for ( Element antennaElement : antennaElementList )
+		{
+			double x = XMLUtil.getAttributeDoubleValue( antennaElement, "x", 0 );
+			double y = XMLUtil.getAttributeDoubleValue( antennaElement, "y", 0 );
+			float ray = XMLUtil.getAttributeFloatValue( antennaElement, "ray", 0 );
+			String comPort = XMLUtil.getAttributeValue( antennaElement, "com", "COM00");
+			
+			rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( x,  y ) , ray , comPort ) );
+		}
+		
+		//rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 136,   123 ) , size , "COM100" ) );
+		
+		
+		// updateAllROICage();
+		
+		/*
+
+		ROI2DArea roiCage = new ROI2DArea( cageFloorMask );
+		int dilatation = 10;
+		System.out.println("Dilatation of floor (nb pixels): " + dilatation );
+		System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
+		roiCage= MorphoROITools.dilateROI( roiCage , dilatation, dilatation , 1 );			
+		System.out.println( "Number of point in dilated area: " + roiCage.getAsBooleanMask().getPoints().length );
+		roiCage.optimizeBounds();
+		
+		ArrayList<ROI2D> roiCageList = new ArrayList<ROI2D>();
+		roiCageList.add( roiCage );			
+		setROICage( roiCageList );
+		
+		
+		
+		updateAllROICage();
+
+
+		 */
+		
+		
+		/*
+		XMLUtil.getSubNode(node, name)
+		
+		Element rfidElement = XMLUtil.getElement( loadRFIDDocument.getDocumentElement(), "RFID" );
+
+		ArrayList<Element> events = XMLUtil.getElements( rfidElement , "EVENT" );
+		System.out.println("Loading " + events.size() + " rfid events");
+
+		for ( Element event : events )
+		{
+			int tEvent = XMLUtil.getAttributeIntValue( event , "t", 0 );
+			int latency = XMLUtil.getAttributeIntValue( event , "latency", LiveMouseTracker.RFID_DEFAULT_LATENCY );
+			float x = XMLUtil.getAttributeFloatValue( event , "x" , 0 );
+			float y = XMLUtil.getAttributeFloatValue( event , "y" , 0 );
+			float ray = XMLUtil.getAttributeFloatValue( event , "ray" , 0 );
+			String id = XMLUtil.getAttributeValue( event , "id" , "" );
+			{
+				Point2D point = new Point2D.Double( x, y ) ;
+				AntennaReadEvent rfidEvent = new AntennaReadEvent( tEvent, latency, id, point, ray );
+				//addEvent( rfidEvent );
+				eventListLoaded.add( rfidEvent );
+				System.out.println("event loaded");
+			}
+		}
+		*/
+		
+		
+		
+		/*
+		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		DocumentBuilder db;
+		try {
+			db = dbf.newDocumentBuilder();
+			Document document = db.parse(file);
+			
+			
+			
+			
+		} catch (ParserConfigurationException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		*/
+		
+		
+		
+		System.out.println("User config loaded.");
+
+	}
+
 	Thread processThread;
 
 	MouseDetector mouseDetector ;
@@ -4301,6 +4530,9 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		guiPanel.getStartLiveButton().setEnabled( false );
 		guiPanel.getStopButton().setEnabled( true );
 		guiPanel.getPauseButton().setEnabled( true );
+		
+		
+		
 		
 		//kinectStreamer.startLive(); // previous init location
 
@@ -4692,7 +4924,14 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 				System.out.println("[ShutDown] Closing mpeg recorder." );
 
-				mpegTimeLapseRecorder.shutDown();
+				if ( mpegTimeLapseRecorder != null )
+				{
+					mpegTimeLapseRecorder.shutDown();
+				}
+				if ( mpegTimeLapseRecorderWithoutOverlay != null )
+				{
+					mpegTimeLapseRecorderWithoutOverlay.shutDown();
+				}
 
 				/* THERMAL
 				if ( mpegTimeLapseThermalRecorder != null )
@@ -4762,6 +5001,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public void icyFrameInternalized(IcyFrameEvent e) {}
 	@Override
 	public void icyFrameExternalized(IcyFrameEvent e) {}
+
 
 
 

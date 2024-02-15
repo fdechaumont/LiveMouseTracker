@@ -265,9 +265,9 @@ public class LiveMouseTrackerPanel extends JPanel {
 				savePanel.add(panel_3, gbc_panel_3);
 				GridBagLayout gbl_panel_3 = new GridBagLayout();
 				gbl_panel_3.columnWidths = new int[]{159, 182, 0};
-				gbl_panel_3.rowHeights = new int[]{25, 0, 0};
+				gbl_panel_3.rowHeights = new int[]{25, 25,0, 0};
 				gbl_panel_3.columnWeights = new double[]{0.0, 1.0, Double.MIN_VALUE};
-				gbl_panel_3.rowWeights = new double[]{0.0, 0.0, Double.MIN_VALUE};
+				gbl_panel_3.rowWeights = new double[]{0.0,0.0, 0.0, Double.MIN_VALUE};
 				panel_3.setLayout(gbl_panel_3);
 
 				saveToMp4CheckBox = new JCheckBox("Save timelapse to MP4");
@@ -278,6 +278,17 @@ public class LiveMouseTrackerPanel extends JPanel {
 				gbc_saveToMp4CheckBox.gridx = 0;
 				gbc_saveToMp4CheckBox.gridy = 0;
 				panel_3.add(saveToMp4CheckBox, gbc_saveToMp4CheckBox);
+				
+				saveToMp4WithoutOverlayCheckBox = new JCheckBox("Save timelapse to MP4 (without overlay)");
+				saveToMp4WithoutOverlayCheckBox.setSelected(false);
+				GridBagConstraints gbc_saveToMp4CheckBox2 = new GridBagConstraints();
+				gbc_saveToMp4CheckBox.anchor = GridBagConstraints.NORTH;
+				gbc_saveToMp4CheckBox.insets = new Insets(0, 0, 5, 5);
+				gbc_saveToMp4CheckBox.gridx = 0;
+				gbc_saveToMp4CheckBox.gridy = 0;
+				panel_3.add(saveToMp4WithoutOverlayCheckBox, gbc_saveToMp4CheckBox2);
+				
+				
 
 				JLabel label_5 = new JLabel("record each # frames");
 				GridBagConstraints gbc_label_5 = new GridBagConstraints();
@@ -402,6 +413,9 @@ public class LiveMouseTrackerPanel extends JPanel {
 	private JButton select1AnimalButton;
 	private JButton select2AnimalButton;
 	private JCheckBox saveToMp4CheckBox;
+	private JCheckBox saveToMp4WithoutOverlayCheckBox;
+	
+	
 	private JCheckBox streamToSQLCheckBox;
 	private JTextField experimentFolderTextField;
 	private JTextField experimentNameTextField;
@@ -497,6 +511,10 @@ public class LiveMouseTrackerPanel extends JPanel {
 	}
 	public JCheckBox getSaveToMp4CheckBox() {
 		return saveToMp4CheckBox;
+	}
+	
+	public JCheckBox getSaveToMp4WithoutOverlayCheckBox() {
+		return saveToMp4WithoutOverlayCheckBox;
 	}
 
 

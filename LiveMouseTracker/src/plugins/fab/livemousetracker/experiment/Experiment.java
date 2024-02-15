@@ -247,7 +247,7 @@ public class Experiment {
 			connection.setAutoCommit( false );
 
 			// This is moved to the main thread because track may change while this part of code is called
-			// LiveMouseTracker.trackContainer.breakTooLongTrack( getFilterUpperFrameLimit() );
+			LiveMouseTracker.trackContainer.breakTooLongTrack( LiveMouseTracker.getFilterUpperFrameLimit() ); // FIX : CHECK if this is okay while tracking
 
 			saveAnimals(connection, trackContainer );
 			saveFrameData( connection, trackContainer, streamSave );

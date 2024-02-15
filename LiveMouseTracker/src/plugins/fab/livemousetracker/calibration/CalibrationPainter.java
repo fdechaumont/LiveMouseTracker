@@ -33,6 +33,7 @@ import java.awt.geom.Point2D;
 public class CalibrationPainter extends Overlay {
 
 	enum Setup {
+		// CUSTOM_USER_DEFINED,
 		Cage_50x50cm,
 		Cage_50x50cm_WithPerspective,
 		Cage_50x50cm_WithCorrection,
@@ -78,6 +79,12 @@ public class CalibrationPainter extends Overlay {
 
 		switch ( setup )
 		{
+		/*
+		case CUSTOM_USER_DEFINED:
+			g.drawString( "CUSTOM USER DEFINED.", 112, 65 );
+			*/
+			
+			
 		case Cage_50x50cm:
 			// quad 50x50cm
 			g.drawString( "50x50cm ground cage limits CAMERA 1.", 112, 65 );

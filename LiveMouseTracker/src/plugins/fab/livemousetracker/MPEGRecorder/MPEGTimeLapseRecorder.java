@@ -36,6 +36,8 @@ public class MPEGTimeLapseRecorder {
 	ArrayList<BufferedImage> imageToRecordList = new ArrayList<BufferedImage>();
 	boolean shutDown = false;
 	boolean grabCurrent = false;
+	boolean saveOverlay = true;
+	String baseName = "video_t";
 
 	Thread mpegSaver = new Thread() {
 
@@ -48,7 +50,7 @@ public class MPEGTimeLapseRecorder {
 				{
 					try
 					{
-						BufferedImage imageToSave = grabImage( true );
+						BufferedImage imageToSave = grabImage( saveOverlay );
 
 						synchronized (imageToRecordList) {
 							// check if size is same as the previous image.
@@ -135,7 +137,7 @@ public class MPEGTimeLapseRecorder {
 						*/
 						mpegRecorder = new MPEGRecorderFramePerFrame(
 								LiveMouseTracker.BASE_FOLDER +
-								LiveMouseTracker.getExperimentName() + "/video_t" +LiveMouseTracker.getT() ,
+								LiveMouseTracker.getExperimentName() + "/" + baseName +LiveMouseTracker.getT() ,
 								fps / Integer.parseInt( LiveMouseTracker.guiPanel.getSaveToMp4SkipFrame().getText() ) );
 						mpegRecorder.record( imageToRecord );
 					}
@@ -167,9 +169,11 @@ public class MPEGTimeLapseRecorder {
 
 	};
 
-	public MPEGTimeLapseRecorder() {
+	public MPEGTimeLapseRecorder( String baseName, boolean saveOverlay ) {
 
-		if ( !LiveMouseTracker.guiPanel.getSaveToMp4CheckBox().isSelected() ) return;
+		this.baseName = baseName;
+		this.saveOverlay = saveOverlay;
+		
 		mpegSaver.setPriority( LiveMouseTracker.SECONDARY_THREAD_PRIORITY );
 		mpegSaver.start();
 //		Util.runSingle( mpegSaver, mpegSaverRunnable );
@@ -215,8 +219,12 @@ public class MPEGTimeLapseRecorder {
 //			mpegRecorder.record( renderedImage );
 		}else
 		{
+
+			double min = LiveMouseTracker.getInfraOut().getFirstViewer().getLut().getLutChannel( 0 ).getMin();
+			double max = LiveMouseTracker.getInfraOut().getFirstViewer().getLut().getLutChannel( 0 ).getMax();
+			
 			LUT lut = LiveMouseTracker.getInfraOut().createCompatibleLUT();
-			lut.getLutChannel( 0 ).setMinMax( 0 , 32000 );
+			lut.getLutChannel( 0 ).setMinMax( min , max );
 			return IcyBufferedImageUtil.getARGBImage( LiveMouseTracker.infraImage, lut );
 //			mpegRecorder.record(
 //					IcyBufferedImageUtil.getARGBImage(infraImage, lut));

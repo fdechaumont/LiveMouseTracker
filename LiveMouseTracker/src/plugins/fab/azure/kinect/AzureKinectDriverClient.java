@@ -86,7 +86,7 @@ public class AzureKinectDriverClient extends Thread
                     }
                     catch (Exception e)
                     {
-                        System.err.println("Error while initializing TCP client");
+                        System.err.println("Error while initializing TCP client to azure kinect driver");
                         System.err.println(e.getMessage());
                         Thread.sleep(5000);
                     }
