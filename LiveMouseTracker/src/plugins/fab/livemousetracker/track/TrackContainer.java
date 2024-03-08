@@ -187,7 +187,13 @@ public class TrackContainer {
 		animal.removeTrackSegment( ts );
 		for ( MouseDetection det : ts.getDetectionList() )
 		{
-			det.getROI2DArea().setColor( Color.white );
+			try
+			{
+				det.getROI2DArea().setColor( Color.white );
+			}catch( Exception e)
+			{
+				// Problem in Icy that can cause an exception in the fireOveralyChangerdEvent ( Overlay.java:612 )
+			}
 		}
 		anonymousTrackSegmentPool.add( ts );
 
