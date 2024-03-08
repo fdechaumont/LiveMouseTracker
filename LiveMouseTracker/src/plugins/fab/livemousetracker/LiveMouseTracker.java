@@ -313,7 +313,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static final boolean USE_MACHINELEARNING_CACHE = true;
 	private static final boolean MANAGE_FRAME_DROP = false;
 	public static final boolean HEAD_TAIL_MACHINE_LEARNING = true;
-	public static boolean USE_MULTIPLE_IDENTITY_RECOVERY_WITH_MACHINE_LEARNING = true; // false for diseapearring animals
+	public static boolean USE_MULTIPLE_IDENTITY_RECOVERY_WITH_MACHINE_LEARNING = false; // false for diseapearring animals
 
 	private static boolean SAVE_BACKGROUND = false;
 	public int saveBackgroundEachNumberOfFrame = 30*60;
@@ -461,10 +461,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	
 	//boolean rat_mode = false;
-	//public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
+	public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
-	public static CAGE_MODE cageMode = CAGE_MODE.BLOCK_50x50;
+	//public static CAGE_MODE cageMode = CAGE_MODE.BLOCK_50x50;
 
 	KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
 	//TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 1 );
@@ -1512,6 +1512,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			}
 		}
 		
+		
+		
 		// reject reflexion detection
 		//cage
 		if ( cageROIMask != null && cageFloorMask != null )
@@ -1545,7 +1547,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		
 		
 		//performanceMonitor.stepDone("Check reset background");
-
+		
 
 		filterDetection( rawMouseDetectionList , t , depthImage );
 		//performanceMonitor.stepDone("Filter detection");
