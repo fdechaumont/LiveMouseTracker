@@ -36,6 +36,7 @@ import plugins.fab.livemousetracker.BackgroundHeightMapBuilder;
 import plugins.fab.livemousetracker.FrameInfo;
 import plugins.fab.livemousetracker.LiveMouseTracker;
 import plugins.fab.livemousetracker.ROI2DAreaX;
+import plugins.fab.livemousetracker.LiveMouseTracker.CAGE_MODE;
 import plugins.fab.livemousetracker.morpho.Moment;
 import plugins.fab.livemousetracker.morpho.MorphoROITools;
 import plugins.fab.livemousetracker.overlay.Event;
@@ -553,6 +554,19 @@ public class MouseDetector {
                 for ( BooleanMask2D maskCandidate : validMask.keySet())
 //                for ( BooleanMask2D maskCandidate : detectionOkArrayList )
                 {
+                	/*
+                	if ( LiveMouseTracker.cageMode == CAGE_MODE.RATS_25 )
+            		{
+            			// filter reshape animals only for rats ( experimental )
+            			
+                		ROI2DArea ratROI = new ROI2DArea( maskCandidate );
+                		int factor = 4;
+            			ROI2DArea ratROIEroded = MorphoROITools.erodeROI( ratROI, factor, factor , 1 );
+            			ROI2DArea ratROIDilated = MorphoROITools.dilateROI( ratROIEroded, factor, factor , 1 );
+            			maskCandidate = ratROIDilated.getBooleanMask( true );
+            		}
+            		*/
+                	
                     ROI2DAreaX seg = createROI2DAreaX( maskCandidate );
 
                     rawMouseDetectionArrayList.add(
