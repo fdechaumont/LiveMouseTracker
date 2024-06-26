@@ -344,6 +344,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	boolean initDone = false; // Check if the init process is finished.
 	boolean lutInfraDone = false;
+	static int minContrast = -1;
+	static int maxContrast = -1;
 
 	static int lastMainThreadComputationTimeMs = 0;
 	private boolean pauseAllProcess = false;
@@ -636,11 +638,6 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public void run() {
 
 		
-		/*
-		System.out.println("TO REMOVE !!");
-		loadConfigFile(); // TO REMOVE : should be in init
-		System.out.println("TO REMOVE !!");
-		*/
 		
 		
 		System.out.println("Starting Live Mouse Tracker version " + version );
@@ -929,29 +926,34 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 					if (!lutInfraDone && (infraOut.getFirstViewer() != null))
 					{
-						if ( cageMode == CAGE_MODE.RATS_25 )
+						if (this.minContrast == -1 )
 						{
-							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 12750 );
-						}
-						
-						if ( cageMode == CAGE_MODE.CLASSIC_16 )
+							if ( cageMode == CAGE_MODE.RATS_25 )
+							{
+								infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 12750 );
+							}
+							
+							if ( cageMode == CAGE_MODE.CLASSIC_16 )
+							{
+								// TODO TODAY : camera kinect v2
+								//infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
+								// TODO TODAY : camera kinect azure
+								infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 3200 );
+							}
+							
+							if ( cageMode == CAGE_MODE.MULTI_CLASSIC_16 )
+							{
+								infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 5000 );
+							}
+	
+							if ( cageMode == CAGE_MODE.MULTI_NICO )
+							{
+								infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 5000 );
+							}
+						}else
 						{
-							// TODO TODAY : camera kinect v2
-							//infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
-							// TODO TODAY : camera kinect azure
-							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 3200 );
+							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( this.minContrast, this.maxContrast );
 						}
-						
-						if ( cageMode == CAGE_MODE.MULTI_CLASSIC_16 )
-						{
-							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 5000 );
-						}
-
-						if ( cageMode == CAGE_MODE.MULTI_NICO )
-						{
-							infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 5000 );
-						}
-						
 						
 						//infraOut.getFirstViewer().getLut().getLutChannel(0).setMinMax( 0, 32000 );
 						lutInfraDone = true;
@@ -3329,7 +3331,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		{
 			System.out.println("Shutdown display log console. Send to file. (remove console redirection)");
 			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-			System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));
+			System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));			
 		}
 
 		DIADIC_BLACK_AND_WHITE_NO_RFID_EXPERIMENT = guiPanel.getDiadicBlackAndWhiteWithoutRFIDCheckBox().isSelected();
@@ -4184,7 +4186,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				{
 					for ( int x=0; x<nbRow; x++ )
 					{
-						rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( minX+ x*stepX, minY+ y*stepY ) , 25 , "COM"+comNumber ) ); // 23
+						double xx = minX+ x*stepX;
+						double yy = minY+ y*stepY;
+						rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( xx,yy ) , 25 , "COM"+comNumber ) ); // 23
+						System.out.println( "Antenna: " + xx + " " + yy +" " + comNumber );
 						comNumber++;
 					}					
 				}
@@ -4293,6 +4298,16 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		this.cageMode = CAGE_MODE.USER;
 		
 		Document xmlDocument = XMLUtil.loadDocument( file );
+		
+		Element contrastElement = XMLUtil.getElement( xmlDocument.getDocumentElement(), "contrast" );
+		if ( contrastElement != null )
+		{
+			Attr min = XMLUtil.getAttribute( contrastElement, "min" );
+			Attr max = XMLUtil.getAttribute( contrastElement, "max" );
+			this.minContrast = Integer.parseInt( min.getValue() );
+			this.maxContrast = Integer.parseInt( max.getValue() );
+		}
+		
 		Element cagefloorElement = XMLUtil.getElement( xmlDocument.getDocumentElement(), "cagefloor" );
 		
 		System.out.println( cagefloorElement );
