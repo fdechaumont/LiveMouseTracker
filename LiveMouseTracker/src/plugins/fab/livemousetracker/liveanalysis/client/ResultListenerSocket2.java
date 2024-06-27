@@ -164,6 +164,19 @@ public class ResultListenerSocket2 implements Runnable, LiveTrackerListener {
 				Element detectionElement = XMLUtil.addElement( frame , "detection" );
 				XMLUtil.setAttributeFloatValue( detectionElement, "x", (float)detection.getMassCenter().getX() );
 				XMLUtil.setAttributeFloatValue( detectionElement, "y", (float)detection.getMassCenter().getY() );
+				
+				if ( detection.getFrontPoint() != null )
+				{
+					XMLUtil.setAttributeFloatValue( detectionElement, "hx", (float)detection.getFrontPoint().getX() );
+					XMLUtil.setAttributeFloatValue( detectionElement, "hy", (float)detection.getFrontPoint().getY() );
+				}
+				
+				if ( detection.getBackPoint() != null )
+				{
+					XMLUtil.setAttributeFloatValue( detectionElement, "bx", (float)detection.getBackPoint().getX() );
+					XMLUtil.setAttributeFloatValue( detectionElement, "by", (float)detection.getBackPoint().getY() );
+				}
+				
 				XMLUtil.setAttributeFloatValue( detectionElement, "confidencyScore", confidencyScore );
 				Animal animal = liveMouseTracker.trackContainer.animalTrackSegmentPool.getAnimalOwningTrack( track );
 				int animalId = 0;
