@@ -175,7 +175,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static final boolean SOUND_ENABLED = false;
 
 	/** This filtering const is used in the detector of wrong detection */
-	public static float FILTERING_ANIMAL_VS_UNKNOWN_THRESHOLD = 1; //0.95f; // 0.7 // 1 error in an animal track is enough to break identity. Should be fixed.
+	public static float FILTERING_ANIMAL_VS_UNKNOWN_THRESHOLD = 0.95f; //0.95f; // 0.7 // 1 error in an animal track is enough to break identity. Should be fixed.
 	public static boolean MACHINE_LEARNING_DETECTION_ERROR_ENABLED = true;
 	/** Number of default latency frame of the RFID reading (*33ms to get the latency)*/
 	public static final int RFID_DEFAULT_LATENCY = 3;
@@ -463,7 +463,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	
 	//boolean rat_mode = false;
-	public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
+	public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 	//public static CAGE_MODE cageMode = CAGE_MODE.BLOCK_50x50;
