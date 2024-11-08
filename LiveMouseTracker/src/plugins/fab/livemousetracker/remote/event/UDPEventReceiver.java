@@ -62,7 +62,8 @@ public class UDPEventReceiver extends Thread {
 						LiveMouseTracker.addEventLogToDataBase( new EventLog( sentence, null, startFrame ));
 						LiveMouseTracker.getTrackPoolOverlay().setUDPEventInfoString( sentence );
 					}
-				}else
+				}
+				else
 				{
 					System.out.println( "UDP Event Receiver: string received (Ignored, not local): " + sentence );
 				}

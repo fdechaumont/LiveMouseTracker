@@ -74,7 +74,14 @@ public class AviSoftEventReceiver extends Thread {
 				if ( sentence.contains("start") )
 				{
 					startFrame = LiveMouseTracker.getT();
-					LiveMouseTracker.getTrackPoolOverlay().setAvisoftInfoString( right( sentence ) );
+					try
+					{
+						LiveMouseTracker.getTrackPoolOverlay().setAvisoftInfoString( right( sentence ) );
+					}
+					catch( Exception e)
+					{
+						System.out.println("Avisoft receiver : track pool overlay not ready");
+					}
 				}
 
 				if ( sentence.contains("end") )
@@ -84,7 +91,14 @@ public class AviSoftEventReceiver extends Thread {
 
 					LiveMouseTracker.addEventLogToDataBase(
 							new EventLog("USV seq", null, startFrame, LiveMouseTracker.getT() , fileName ));
-					LiveMouseTracker.getTrackPoolOverlay().setAvisoftInfoString( sentence );
+					try
+					{
+						LiveMouseTracker.getTrackPoolOverlay().setAvisoftInfoString( sentence );
+					}
+					catch( Exception e)
+					{
+						System.out.println("Avisoft receiver : track pool overlay not ready");
+					}
 				}
 
 				Thread.yield();
