@@ -79,7 +79,7 @@ public class MouseDetector {
     	//Chronometer detectionChrono = new Chronometer("Detection Chrono");
         tooBigSpuriousMaskList.clear();
         //detectionChrono.displayMs();
-        //LiveMouseTracker.performanceMonitor.stepDone("Detection : clear list");
+        LiveMouseTracker.performanceMonitor.stepDone("Detection : clear list");
         try
         {
             infraOut.beginUpdate();
@@ -110,7 +110,7 @@ public class MouseDetector {
 //				}
             }
 
-            //LiveMouseTracker.performanceMonitor.stepDone("Detection : remove ROIs");
+            LiveMouseTracker.performanceMonitor.stepDone("Detection : remove ROIs");
             //detectionChrono.displayMs();
 
 //			// Threshold depth and remove saturated values
@@ -184,7 +184,7 @@ public class MouseDetector {
 //            		}
 //                }
             }
-            //LiveMouseTracker.performanceMonitor.stepDone("Detection : Create maps");
+            LiveMouseTracker.performanceMonitor.stepDone("Detection : Create maps");
 
             //detectionChrono.displayMs();
 
@@ -197,7 +197,18 @@ public class MouseDetector {
 					mask[i] = false;
 				}
 			}
-			//LiveMouseTracker.performanceMonitor.stepDone("Detection : Remove saturated values");
+			
+			// TEST 2506: on enleve la data des points impossibles. Pas de detection possible avec.
+			for ( int i = 0 ; i < infraBuffer.length ; i++ )
+			{
+				if ( depthBuffer[i] == 10000 )
+				{
+					mask[i] = false;
+				}
+			}
+						
+			
+			LiveMouseTracker.performanceMonitor.stepDone("Detection : Remove saturated and invalid depth values");
 
 			BooleanMask2D allMiceMask = new BooleanMask2D( infraImage.getBounds(), mask) ;
 			//BooleanMask2D allMiceMask = new BooleanMask2D( new Rectangle( 512, 424 ), mask) ;
@@ -206,7 +217,7 @@ public class MouseDetector {
 
             //detectionChrono.displayMs();
             //System.out.println("Detection : Detect in Mask");
-            //LiveMouseTracker.performanceMonitor.stepDone("Detection : create detection mask");
+            LiveMouseTracker.performanceMonitor.stepDone("Detection : create detection mask");
 
             // opti 1
 //            ROI2DArea roi = new ROI2DArea( new BooleanMask2D( new Rectangle( 512, 424 ), mask) );
@@ -224,7 +235,7 @@ public class MouseDetector {
 
                 BooleanMask2D[] maskArrayFull = allMiceMask.getComponents();
 //                BooleanMask2D[] maskArrayFull = roi.getBooleanMask( true ).getComponents();
-                //LiveMouseTracker.performanceMonitor.stepDone("Detection : get component");
+                LiveMouseTracker.performanceMonitor.stepDone("Detection : get component");
 
                 Map<BooleanMask2D, Integer> validMask = new HashMap<BooleanMask2D,Integer>();
 //                ArrayList<BooleanMask2D> maskList = new ArrayList<BooleanMask2D>();
@@ -280,7 +291,7 @@ public class MouseDetector {
                         }
                     }
                 }
-                //LiveMouseTracker.performanceMonitor.stepDone("Detection : build spurious");
+                LiveMouseTracker.performanceMonitor.stepDone("Detection : build spurious ( spu: " + spuriousList.size() + " / raw: " +  rawMouseDetectionArrayList.size() + ")");
 
                 if ( LiveMouseTracker.SHOW_SMALL_SPURIOUS_DETECTION_ENABLED )
                 {

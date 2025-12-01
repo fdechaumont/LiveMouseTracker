@@ -399,6 +399,28 @@ public class LiveMouseTrackerPanel extends JPanel {
 								gbc_manageEventFromArduinoTTL.gridx = 0;
 								gbc_manageEventFromArduinoTTL.gridy = 2;
 								panel.add(manageEventFromArduinoTTL, gbc_manageEventFromArduinoTTL);
+								
+								setupPanel = new JPanel();
+								tabbedPane.addTab("Antenna setup", null, setupPanel, null);
+								setupPanel.setLayout(null);
+								
+								btnNewButton_2 = new JButton("Read antenna serial number");
+								btnNewButton_2.setBounds(10, 26, 209, 23);
+								setupPanel.add(btnNewButton_2);
+								
+								btnNewButton_1 = new JButton("Set antenna serial number");								
+								btnNewButton_1.setBounds(244, 26, 167, 23);
+								setupPanel.add(btnNewButton_1);
+								
+								btnNewButton_3 = new JButton("Check antenna discovery and pairing");
+								btnNewButton_3.setBounds(10, 62, 209, 23);
+								setupPanel.add(btnNewButton_3);
+								
+								btnResetSerial = new JButton("Reset all serial numbers");
+								btnResetSerial.setBounds(243, 60, 168, 23);
+								setupPanel.add(btnResetSerial);
+								
+								
 	}
 
 	/**
@@ -437,6 +459,12 @@ public class LiveMouseTrackerPanel extends JPanel {
 	private JCheckBox saveBackgroundMapCheckBox;
 	private JTextField SaveBackGroundRecordEachFrame;
 	private JLabel lblRecordEach;
+	private JPanel setupPanel;
+	private JButton btnNewButton;
+	private JButton btnNewButton_1;
+	private JButton btnNewButton_2;
+	private JButton btnNewButton_3;
+	private JButton btnResetSerial;
 
 
 
@@ -567,5 +595,17 @@ public class LiveMouseTrackerPanel extends JPanel {
 	}
 	public JTextField getSaveBackGroundRecordEachFrame() {
 		return SaveBackGroundRecordEachFrame;
+	}
+	public JButton getBtnSetAntennaSerialNumber() {
+		return btnNewButton_1;
+	}
+	public JButton getReadAntennaSerialNumber() {
+		return btnNewButton_2;
+	}
+	public JButton getBtnCheckAntennaDiscoveryAndPairing() {
+		return btnNewButton_3;
+	}
+	public JButton getBtnResetSerial() {
+		return btnResetSerial;
 	}
 }

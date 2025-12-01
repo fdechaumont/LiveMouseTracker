@@ -47,7 +47,7 @@ public class RFIDTest extends PluginActionable implements AntennaReadListener , 
 		String port = list.getPortNames()[0];
 		System.out.println("Start on port " + port );
 
-		RFIDAntenna antenna = new RFIDAntenna( new Point2D.Double( 214,   81 ) , 20 , port );
+		RFIDAntenna antenna = new RFIDAntenna( new Point2D.Double( 214,   81 ) , 20 , port , null );
 		antenna.addRFIDAntennaListener( this );
 		antenna.setEnabled( true );
 

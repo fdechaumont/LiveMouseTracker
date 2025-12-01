@@ -54,10 +54,10 @@ public class RFIDReaderTest_uRFIDUSBpriority1design_v2 extends PluginActionable 
 //			Thread.sleep( 1000 );
 //			System.out.println( serial.readString() );
 
-			antennaList.add( new RFIDAntenna( new Point2D.Double( 0, 0) , 0 , "COM6" ) );
-			antennaList.add( new RFIDAntenna( new Point2D.Double( 0, 0) , 0 , "COM7" ) );
-			antennaList.add( new RFIDAntenna( new Point2D.Double( 0, 0) , 0 , "COM8" ) );
-			antennaList.add( new RFIDAntenna( new Point2D.Double( 0, 0) , 0 , "COM9" ) );
+			antennaList.add( new RFIDAntenna( new Point2D.Double( 0, 0) , 0 , "COM6", null ) );
+			antennaList.add( new RFIDAntenna( new Point2D.Double( 0, 0) , 0 , "COM7", null ) );
+			antennaList.add( new RFIDAntenna( new Point2D.Double( 0, 0) , 0 , "COM8", null ) );
+			antennaList.add( new RFIDAntenna( new Point2D.Double( 0, 0) , 0 , "COM9", null ) );
 
 //			antennaList.get( 0 ).switchOn();
 

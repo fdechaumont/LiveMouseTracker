@@ -39,6 +39,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -80,6 +81,7 @@ import icy.roi.ROIUtil;
 //import icy.roi.ROI2D;
 import icy.sequence.Sequence;
 import icy.system.profile.Chronometer;
+import icy.system.thread.Processor;
 import icy.system.thread.ThreadUtil;
 import icy.type.DataType;
 import icy.type.collection.array.Array1DUtil;
@@ -138,8 +140,11 @@ import plugins.fab.livemousetracker.remote.rfidstop.RFIDRemoteStop;
 // UNRELEASED MULTI
 import plugins.fab.livemousetracker.remotearena.server.LMTRemoteAreaServer;
 import plugins.fab.livemousetracker.remotearena.server.RegisteredArenaClient;
+import plugins.fab.livemousetracker.rfid.Antenna;
 import plugins.fab.livemousetracker.rfid.RFIDAntenna;
+import plugins.fab.livemousetracker.rfid.RFIDAntennaSerialProgrammer;
 import plugins.fab.livemousetracker.rfid.RFIDManager2;
+import plugins.fab.livemousetracker.rfid.RFIDPairing;
 import plugins.fab.livemousetracker.rfid.RFIDSolver2;
 import plugins.fab.livemousetracker.serial.SerialDriverPlugin;
 import plugins.fab.livemousetracker.splitter.DetectionSplitter3Optimized;
@@ -159,14 +164,14 @@ import weka.core.Instances;
 public class LiveMouseTracker extends PluginActionable
 implements KinectListener, ActionListener, IcyFrameListener {
 
-	String version = "2024 PREVIEW";
+	String version = "2025";
 	/** Warning: This depth sequence is the one from the kinect, It's not a Z-corrected version. Use LiveMouseTracker.depthImage instead */
-	public static final boolean DISPLAY_DEPTH_SEQUENCE = false;
+	public static boolean DISPLAY_DEPTH_SEQUENCE = false;
 	public static final boolean DISPLAY_DIF_INFRA_SEQUENCE = false;
 	public static final boolean DISPLAY_DIF_DEPTH_SEQUENCE = false;
 	public static final boolean DISPLAY_TAIL_SEQUENCE = false;
 	public static final boolean DISPLAY_BACKGROUND_SEQUENCE = false;
-	public static final boolean DISPLAY_SUBSTRACTED_BACKGROUND_SEQUENCE = false;
+	public static boolean DISPLAY_SUBSTRACTED_BACKGROUND_SEQUENCE = false;
 	public static final boolean DISPLAY_REVERT_3D_DEPTH_AND_BACKGROUND = false;
 
 	/** Removes from the learning the animal that have been be split.*/
@@ -187,6 +192,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static boolean SAVE_MEDALLON = false;
 	public static boolean PERSPECTIVE_TRANSFORM = false;
 
+	public static boolean instanceStarted = true; // to avoid multiple LMT launch
+	
 	/*
 	 * MACHINE LEARNING
 	 */
@@ -212,6 +219,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static final double MIN_INSTANT_SPEED_FOR_SUB_PART_CALCULATION = 1;
 	public static double MIN_TIME_WINDOW_FOR_AHEAD_VECTOR_CALCULATION = 10;
 
+	/* 
+	 * threads 
+	 */
+	public static Processor processor = new Processor( 1000, 1000 );
+	
 	/*
 	 * Validation
 	 */
@@ -250,6 +262,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	// Public static final boolean FLIP_X_INPUT_ENABLED = true;
 	public static boolean COMPENSATE_Z_WITH_INTENSITY_ENABLED = true;
+	public static int MAX_OBSERVABLE_DEPTH = 3000; // 640 for LMT // over this depth the data is invalid
 	public static boolean TRACKING_ENABLED = true;
 
 	/** This value cannot change along time as inits will not be performed*/
@@ -291,7 +304,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	/** Instead of splitting, reject detection */
 	public static boolean REJECT_DETECTION_IF_SPLIT = false;
 	/** volume that the detection should be tried to reach during split */
-	public static final double DETECTION_SPLIT_TARGET_VOLUME = 31000; // 60500; // 31000
+	public static double DETECTION_SPLIT_TARGET_VOLUME = 31000; // 60500; // 31000
 	public static final boolean ENABLE_DETECTION_POST_PROCESS = false;
 	/** if a too big detection is above 150*150 pixels then we assume that is an external big object */
 	public static final int TOO_BIG_DETECTION_REJECT_SIZE = 150*150;
@@ -308,7 +321,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	public static boolean TAIL_TRACKING_ASSOCIATION_TO_DETECTION_ENABLED = false;
 	public static boolean TAIL_FIT_ENABLED = false;
 
-	// FIXME: faire un enum de ces 2 strategies l�.
+	// FIXME: faire un enum de ces 2 strategies
 	public static final boolean CREATE_NEW_TRACK_AFTER_SPLIT_WITH_ID_CONTINUITY = true;
 	public static final boolean USE_MACHINELEARNING_CACHE = true;
 	private static final boolean MANAGE_FRAME_DROP = false;
@@ -417,6 +430,23 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	/* Number of frame computed in more than 30 ms. */
 	public static int nbOver = 0;
+	
+	
+	
+	/* Version Fabio VBS
+	
+	
+	public static int DEPTH_SENSITIVITY = 8;	
+	public static int MAX_SIZE_OF_CANDIDATE_DETECTION = 300;
+	public static int MIN_SIZE_SEG_OK = 20; 
+	public static final double DETECTION_SPLIT_TARGET_VOLUME = 1000;
+	public static CAGE_MODE cageMode = CAGE_MODE.RATS_25;
+
+	
+	
+	 * end version Fabio VBS
+	 */
+	
 
 	public static Sequence getInfraOut() {
 		return infraOut;
@@ -463,10 +493,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	
 	//boolean rat_mode = false;
-	public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
 	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
-	//public static CAGE_MODE cageMode = CAGE_MODE.BLOCK_50x50;
+	//public static CAGE_MODE cageMode = CAGE_MODE.CLASSIC_16;
+	public static CAGE_MODE cageMode = CAGE_MODE.BLOCK_50x50;
 
 	KinectStreamer kinectStreamer = new KinectStreamer( SHOW_KINECT_GUI );
 	//TestAzureKinectDriverFabMultiDoubleCam kinectStreamer = new TestAzureKinectDriverFabMultiDoubleCam( 1 );
@@ -641,6 +671,16 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		
 		
 		System.out.println("Starting Live Mouse Tracker version " + version );
+		
+		/*
+		if ( instanceStarted )
+		{
+			System.out.println("Instance already started.");
+			return;
+		}		
+		instanceStarted = true;
+		*/
+		
 		new SerialDriverPlugin();
 
 		
@@ -675,6 +715,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		guiPanel.getSelect2AnimalButton().addActionListener( this );
 		guiPanel.getSelect3AnimalButton().addActionListener( this );
 		guiPanel.getSelect4AnimalButton().addActionListener( this );
+		guiPanel.getReadAntennaSerialNumber().addActionListener( this );
+		guiPanel.getBtnSetAntennaSerialNumber().addActionListener( this );
+		guiPanel.getBtnResetSerial().addActionListener( this );
+		guiPanel.getBtnCheckAntennaDiscoveryAndPairing().addActionListener( this );
 		guiPanel.getStopButton().setEnabled( false );
 		guiPanel.getStopButton().addActionListener( this );
 		guiPanel.getPauseButton().setEnabled( false );
@@ -700,7 +744,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		if ( Icy.getCommandLinePluginArgs().length > 0 )
 		{
-			System.out.println("Starting from commande line.");
+			System.out.println("Starting from command line.");
 			String experimentName = Icy.getCommandLinePluginArgs()[0];
 			String numberOfAnimal = Icy.getCommandLinePluginArgs()[1];
 			guiPanel.getExperimentNameTextField().setText( experimentName );
@@ -1315,7 +1359,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	CRITICAL_LOOP_STEP criticalStep;
 
-	//static public PerformanceMonitor performanceMonitor;
+	static public PerformanceMonitor performanceMonitor;
+	static boolean REFRESH_ESTIMATORS = true ;
 
 	public static int getFilterUpperFrameLimit()
 	{
@@ -1328,7 +1373,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		nbImageProcessed++;
 
 
-		//performanceMonitor = new PerformanceMonitor("Main critical loop #"+t);
+		performanceMonitor = new PerformanceMonitor("Main critical loop #"+t);
 
 
 		criticalStep = CRITICAL_LOOP_STEP.s01_Start;
@@ -1348,7 +1393,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			}
 			ttlSynchronizer.sendTTL( TTLSynchronizer.TTL_SIGNAL.SYNCHRO_FRAME );
 		}
-		//performanceMonitor.stepDone("TTL");
+		performanceMonitor.stepDone("TTL");
 
 		FrameInfo frameInfo = new FrameInfo(
 				t , new Date( Calendar.getInstance().getTime().getTime() ), pauseAllProcess
@@ -1359,7 +1404,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		synchronized ( frameInfoList ) {
 			frameInfoList.add( frameInfo );
 		}
-		//performanceMonitor.stepDone("Frame info");
+		performanceMonitor.stepDone("Frame info");
 
 		//if ( RFID_ENABLED )
 		{
@@ -1380,11 +1425,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		synchronized ( absoluteHintArrayList ) {
 			absoluteHintArrayList.clear();
 		}
-		//performanceMonitor.stepDone("Clear debug overlays and hints");
+		performanceMonitor.stepDone("Clear debug overlays and hints");
 
 		cleanTemporaryROIs();
 
-		//performanceMonitor.stepDone("Clean tmp ROIs");
+		performanceMonitor.stepDone("Clean tmp ROIs");
 
 		criticalStep = CRITICAL_LOOP_STEP.s02_Correct_Z_Map;
 
@@ -1393,13 +1438,13 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		//compensateZIntensityError( depthImage , infraImage );
 		compensateZIntensityError2( depthImage , infraImage );
 
-		//performanceMonitor.stepDone("Correct Z map");
+		performanceMonitor.stepDone("Correct Z map");
 
 		if ( pauseAllProcess ) return;
 
 		IcyBufferedImage depthDifInTimeImage = difDepthInTimeSequence.getImage( 0 , 0 );
 		IcyBufferedImage infraDifInTimeImage = difInfraInTimeSequence.getImage( 0 , 0 );
-		//performanceMonitor.stepDone("Get images");
+		performanceMonitor.stepDone("Get images");
 
 		// Computes the map Depth_t - Depth_(t-1)
 		if ( COMPUTE_DEPTH_DIF_MAP )
@@ -1423,7 +1468,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		// Integrate the new depth Image to build the background map.
 		backgroundHeightMapBuilder.integrateNewDepthMapImage( depthImage );
-		//performanceMonitor.stepDone("Background height map");
+		performanceMonitor.stepDone("Background height map");
 
 		if ( !backgroundHeightMapBuilder.isReady() ) return;
 
@@ -1444,9 +1489,10 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		//System.out.println( "entering critical : "+criticalStep.name() );
 
 		// detect mice
+		performanceMonitor.stepDone("Start detection");
 		ArrayList<MouseDetection> rawMouseDetectionList =
 				mouseDetector.detectMice( depthImage , infraImage ,t , tailCandidateArrayList );
-		//performanceMonitor.stepDone("Detection done");
+		performanceMonitor.stepDone("Detection done");
 
 		// try to break too big detection using tracking
 		//chrono.displayMs();
@@ -1475,11 +1521,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			}else
 			{ 	// perform split
 				//Chronometer chronoSplitDetection = new Chronometer("detection splitter *** ");
-				//performanceMonitor.stepDone("Detection done");
+				performanceMonitor.stepDone("Detection done");
 				rawMouseDetectionList.addAll(
 						DetectionSplitter3Optimized.splitDetectionWithSeed( tooBigDetection ,
 						null ) );
-				//performanceMonitor.stepDone("Splitter done");
+				performanceMonitor.stepDone("Splitter done");
 				//	chronoSplitDetection.displayMs();
 			}
 
@@ -1518,6 +1564,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		
 		// reject reflexion detection
 		//cage
+		
 		if ( cageROIMask != null && cageFloorMask != null )
 		{
 			// Roi fully in cage-cagefloor is rejected
@@ -1539,27 +1586,27 @@ implements KinectListener, ActionListener, IcyFrameListener {
 					//System.out.println( "time : " + t + " - Reflexion removed");
 					
 					Event event = new Event( "Reflexion removed", Color.PINK,							
-							rawDetection.getMassCenter().toPoint2D() );
-					/*
-					LiveMouseTracker.addEvent( event );
-					*/
+							rawDetection.getMassCenter().toPoint2D() );					
+					// LiveMouseTracker.addEvent( event );
+					
 				}
 			}			
 		}
 		
 		
-		//performanceMonitor.stepDone("Check reset background");
+		
+		performanceMonitor.stepDone("Check reset background");
 		
 
 		filterDetection( rawMouseDetectionList , t , depthImage );
-		//performanceMonitor.stepDone("Filter detection");
+		performanceMonitor.stepDone("Filter detection");
 		//chrono.displayMs();
 		//criticalStep = CRITICAL_LOOP_STEP.s07_Filter_Detection;
 		//System.out.println( "entering critical : "+criticalStep.name() );
 
 		postFilterNumberOfAnimals( rawMouseDetectionList );
 		firePostFilterDetection( rawMouseDetectionList , t, depthImage );
-		//performanceMonitor.stepDone("post filter detection");
+		performanceMonitor.stepDone("post filter detection");
 
 //		for ( MouseDetection md : rawMouseDetectionList )
 //		{
@@ -1703,7 +1750,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			//ThreadUtil.runSingle( errorRefresherRunnable );
 		}
 
-		if ( t % 200 == 0 )
+		if ( t % 200 == 0 && LiveMouseTracker.REFRESH_ESTIMATORS  )
 		{
 			threadExecutor.execute( new Runnable() {
 				@Override
@@ -1729,7 +1776,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			});
 		}
 
-		//performanceMonitor.stepDone("all post-thread started");
+		performanceMonitor.stepDone("all post-thread started");
 
 		//
 		// Perform tracking
@@ -1742,7 +1789,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		{
 			track( t,  rawMouseDetectionList );
 		}
-		//performanceMonitor.stepDone("Tracking");
+		performanceMonitor.stepDone("Tracking");
 
 		//chrono.displayMs();
 		//criticalStep = CRITICAL_LOOP_STEP.s10_MultitrackIdentity;
@@ -1761,7 +1808,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				multiTrackIdentity();
 			}
 		}
-		//performanceMonitor.stepDone("Multi track identity");
+		performanceMonitor.stepDone("Multi track identity");
 
 
 
@@ -1776,7 +1823,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			}
 			RFIDSolver2.rfidManagment(rfidManager);
 		}
-		//performanceMonitor.stepDone("RFID Solver");
+		performanceMonitor.stepDone("RFID Solver");
 
 		if( DISPLAY_LOG_IN_CONSOLE )
 		{
@@ -1789,7 +1836,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		// better to do it here to avoid multiple call
 		//backgroundHeightMapBuilder.backgroundImage.dataChanged();
-		//performanceMonitor.stepDone("Background dataChanged");
+		performanceMonitor.stepDone("Background dataChanged");
 
 		//chrono.displayMs();
 		criticalStep = CRITICAL_LOOP_STEP.s12_Record_to_MPEG;
@@ -1838,7 +1885,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			mpegTimeLapseRecorderWithoutOverlay.recordMP4TimeLapse();
 		}
 		
-		//performanceMonitor.stepDone("Record MPEG");
+		performanceMonitor.stepDone("Record MPEG");
 		/* THERMAL
 		if ( thermalSequence != null )
 		{
@@ -1893,7 +1940,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		}
 
-		//performanceMonitor.stepDone("Save background");
+		performanceMonitor.stepDone("Save background");
 
 		// revert depthImage (for display and technical demo purposes)
 		if ( DISPLAY_REVERT_3D_DEPTH_AND_BACKGROUND )
@@ -1932,7 +1979,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				}
 				backgroundSequenceRevert.dataChanged();
 			}
-			//performanceMonitor.stepDone("Display 3D");
+			performanceMonitor.stepDone("Display 3D");
 		}
 
 		// clean past data heavy detection.
@@ -1941,12 +1988,12 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		{
 			mouseDetection.cleanHeavyData();
 		}
-		//performanceMonitor.stepDone("Clean heavy data");
+		performanceMonitor.stepDone("Clean heavy data");
 
 		if ( TTL_SYNCHRO_ENABLED )
 		{
 			manageTTLSynchroEvents();
-			//performanceMonitor.stepDone("TTL Synchro");
+			performanceMonitor.stepDone("TTL Synchro");
 		}
 
 		/*
@@ -1956,8 +2003,11 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		}
 		chrono.displayMs();
 		*/
-		//performanceMonitor.finish();
-		//performanceMonitor.printReport();
+		performanceMonitor.finish();
+		if ( performanceMonitor.getTotalDurationMs() > 30 )
+		{
+			performanceMonitor.printReport();
+		}
 
 	}
 
@@ -2717,6 +2767,22 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		{
 			// deal with invalid data
 			short depth = bufferDepth[i];
+			/*
+			if ( depth == 0 || depth < -32700 )
+			{
+				bufferDepth[i] = (short) 640;
+				continue;
+			}
+			*/
+			
+			// TEST 2506: met a invalide la valeur pour ne pas l'utiliser dans les detections ou l'update de fond
+			//if ( depth == 0 || depth < -32700 )
+			if ( depth == 0 || depth > MAX_OBSERVABLE_DEPTH )
+			{
+				bufferDepth[i] = (short) 10000;
+				continue;
+			}
+			/*
 			if ( depth == 0 || depth < -32700 )
 			{
 				bufferDepth[i] = lastDepthValue;
@@ -2724,6 +2790,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			{
 				lastDepthValue = depth ;
 			}
+			*/
+			// FIN TEST 2506
 
 			// corect with infra
 			short infra = bufferInfra[i];
@@ -2731,6 +2799,14 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 			//float correction = -2.5f * ( infra / 1000f );
 			bufferDepth[i]+= (short) correction;
+			
+			/*
+			if ( bufferDepth[i] > 640 ) // cap maximum depth to floor TODO: compute this value by the mean of the cage
+			{
+				bufferDepth[i] = (short) 640;
+			}
+			*/
+			
 		}
 		//depthImage.dataChanged();
 
@@ -3302,6 +3378,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	
 	private void init() {
 		
+		System.out.println("Starting init...");
+		
 		if ( LiveMouseTracker.guiPanel.getSaveToMp4CheckBox().isSelected() )
 		{
 			mpegTimeLapseRecorder = new MPEGTimeLapseRecorder("video_t" , true );
@@ -3327,12 +3405,6 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 		DISPLAY_LOG_IN_CONSOLE= guiPanel.getLogInConsoleCheckBox().isSelected();
 
-		if( !DISPLAY_LOG_IN_CONSOLE )
-		{
-			System.out.println("Shutdown display log console. Send to file. (remove console redirection)");
-			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-			System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));			
-		}
 
 		DIADIC_BLACK_AND_WHITE_NO_RFID_EXPERIMENT = guiPanel.getDiadicBlackAndWhiteWithoutRFIDCheckBox().isSelected();
 		if ( DIADIC_BLACK_AND_WHITE_NO_RFID_EXPERIMENT )
@@ -3483,12 +3555,16 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		depthOut.removeAllROI();
 		infraOut.removeAllROI();
 
+		/*
 		if ( RFID_ENABLED )
 		{
 			rfidManager = new RFIDManager2();
 		}
+		*/
 		
 		loadUserConfigFile();
+
+
 
 		// Cage extended is the area where the animal can climb.
 //		ROI2DPolygon roiCage = new ROI2DPolygon( new Point2D.Double( 86-5, 55-5 ) );
@@ -4004,6 +4080,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				111:302,222
 				*/
 				// 30
+				/*
 				int size = 30; // 30
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 136,   123 ) , size , "COM100" ) );	
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 79,    112 ) , size , "COM101" ) );	
@@ -4016,12 +4093,14 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 254,   280 ) , size , "COM109" ) );	
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 364,   257 ) , size , "COM110" ) );					
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 302,   222 ) , size , "COM111" ) );
+				*/
 				
 				
 			}
 
 			if ( cageMode == CAGE_MODE.SUPER_BLOCKS )
 			{
+				/*
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 158,   129 ) , 30 , "COM100" ) );	
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double(  94,   122 ) , 30 , "COM101" ) );	
 
@@ -4038,11 +4117,12 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 392,   274 ) , 30 , "COM110" ) );	
 				
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 400,   153 ) , 30 , "COM105" ) );	
-				
+				*/
 			}
 			
 			if ( cageMode == CAGE_MODE.CLASSIC_16 )
 			{
+				/*
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,   81 ) , 30 , "COM30" ) ); // 23
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,   81 ) , 30 , "COM31" ) ); // 25
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,   81 ) , 30 , "COM32" ) ); // 13
@@ -4062,6 +4142,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  336 ) , 30 , "COM43" ) ); // 22
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  336 ) , 30 , "COM44" ) ); // 15
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  336 ) , 30 , "COM45" ) ); // 18
+				*/
 			}
 			
 			
@@ -4071,7 +4152,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				// 284 / 290
 				
 				// mid = 
-				
+				/*
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+284/4  ,   95 ) , 30 , "COM30" ) ); // 
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 256        ,   95 ) , 30 , "COM31" ) ); // mid
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 114+3*284/4,   95 ) , 30 , "COM32" ) ); // 
@@ -4093,7 +4174,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 370  , 63+290/4 ) , 30 , "COM36" ) ); // 
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 370  , 63+290/2 ) , 30 , "COM38" ) ); // mid
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 370  , 63+3*290/4 ) , 30 , "COM42" ) ); // 
-
+				*/
 				
 				//rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,   81 ) , 30 , "COM33" ) ); // 12
 
@@ -4118,6 +4199,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			
 			if ( cageMode == CAGE_MODE.MULTI_CLASSIC_16 )
 			{
+				/*
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,   81 ) , 30 , "COM30" ) ); // 23
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,   81 ) , 30 , "COM31" ) ); // 25
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,   81 ) , 30 , "COM32" ) ); // 13
@@ -4160,7 +4242,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296+shiftX,  336 ) , 30 , "COM64" ) ); 
 				rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378+shiftX,  336 ) , 30 , "COM65" ) ); 
 
-				
+				*/
 			}
 
 			/*
@@ -4168,6 +4250,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			 * */
 			if ( cageMode == CAGE_MODE.RATS_25 )
 			{
+				/*
 				//USE_MULTIPLE_IDENTITY_RECOVERY_WITH_MACHINE_LEARNING = false;
 				double minX = 147 - 15 -10 +2.5;
 				double minY = 95 - 15 -10 +2.5;
@@ -4193,7 +4276,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 						comNumber++;
 					}					
 				}
-				
+				*/
 				
 			}
 
@@ -4280,12 +4363,96 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		processThread.setPriority( Thread.MAX_PRIORITY );
 		processThread.start();
 
+		if( !DISPLAY_LOG_IN_CONSOLE )
+		{
+			System.out.println("Shutdown display log console. Send to file. (remove console redirection)");
+			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+			System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));			
+		}
+
 	}
 
+	private void loadUserConfigFileAntenna() {
+		
+		File file = new File( FileUtil.getApplicationDirectory() + FileUtil.separator +  "lmt-config.xml");
+		Document xmlDocument = XMLUtil.loadDocument( file );
+				
+		rfidManager = new RFIDManager2(); // this is the old way of using the RFIDManager ( it does not connect to the good com port using serial in auto mode )
+		ArrayList<Element> antennaElementList = XMLUtil.getElements( xmlDocument.getDocumentElement(), "antenna" );
+		for ( Element antennaElement : antennaElementList )
+		{
+			double x = XMLUtil.getAttributeDoubleValue( antennaElement, "x", 0 );
+			double y = XMLUtil.getAttributeDoubleValue( antennaElement, "y", 0 );
+			float ray = XMLUtil.getAttributeFloatValue( antennaElement, "ray", 0 );
+			String comPort = XMLUtil.getAttributeValue( antennaElement, "com", "COM0");
+			
+			String expectedInnerSerialNumber = "";
+			
+			Attr innerSerialNumberAttr = XMLUtil.getAttribute( antennaElement, "serialNumber" );			
+			if ( innerSerialNumberAttr != null )
+			{
+				expectedInnerSerialNumber = innerSerialNumberAttr.getValue();
+			}else
+			{
+				int val = Integer.parseInt( comPort.substring( 3 ) ); // COM12 -> 12
+				expectedInnerSerialNumber = String.format("%04d", val ); // 12 -> 0012
+			}
+			
+			rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( x,  y ) , ray , comPort, expectedInnerSerialNumber ) );
+		}
+	}
+	
+	private ArrayList<RFIDPairing> loadUserConfigFileAntennaAsRFIDPairingList() {
+		
+		File file = new File( FileUtil.getApplicationDirectory() + FileUtil.separator +  "lmt-config.xml");
+		Document xmlDocument = XMLUtil.loadDocument( file );
+		
+		ArrayList<RFIDPairing> rfidPairingList = new ArrayList();
+		
+		
+		ArrayList<Element> antennaElementList = XMLUtil.getElements( xmlDocument.getDocumentElement(), "antenna" );
+		for ( Element antennaElement : antennaElementList )
+		{
+			double x = XMLUtil.getAttributeDoubleValue( antennaElement, "x", 0 );
+			double y = XMLUtil.getAttributeDoubleValue( antennaElement, "y", 0 );
+			float ray = XMLUtil.getAttributeFloatValue( antennaElement, "ray", 0 );
+			boolean disabled = false;
+			String comPort = XMLUtil.getAttributeValue( antennaElement, "com", "COM0");
+			
+			String expectedInnerSerialNumber = "";
+			
+			Attr innerSerialNumberAttr = XMLUtil.getAttribute( antennaElement, "serialNumber" );			
+			if ( innerSerialNumberAttr != null )
+			{
+				expectedInnerSerialNumber = innerSerialNumberAttr.getValue();
+			}else
+			{
+				int val = Integer.parseInt( comPort.substring( 3 ) ); // COM12 -> 12
+				expectedInnerSerialNumber = String.format("%04d", val ); // 12 -> 0012
+			}
+			
+			/*
+			Attr disabledAttr = XMLUtil.getAttribute( antennaElement, "disabled" );			
+			if ( disabledAttr != null )
+			{
+				disabled = true;
+			}			
+			 */
+			rfidPairingList.add ( new RFIDPairing( new Point2D.Double( x,  y ) , ray , comPort, expectedInnerSerialNumber ) );
+			
+			
+			// rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( x,  y ) , ray , comPort, expectedInnerSerialNumber ) );
+		}
+		return rfidPairingList;
+	}
+	
+	
+	
+	
 	private void loadUserConfigFile() {
 
 		// loading custom configuration file lmt-config.xml
-		System.out.println("Checking user lmt config file...");
+		System.out.println("Checking user lmt-config.xml file...");
 		File file = new File( FileUtil.getApplicationDirectory() + FileUtil.separator +  "lmt-config.xml");		
 		System.out.println( file );
 		if ( !file.exists() )
@@ -4299,6 +4466,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		
 		Document xmlDocument = XMLUtil.loadDocument( file );
 		
+		
+		
 		Element contrastElement = XMLUtil.getElement( xmlDocument.getDocumentElement(), "contrast" );
 		if ( contrastElement != null )
 		{
@@ -4307,6 +4476,93 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			this.minContrast = Integer.parseInt( min.getValue() );
 			this.maxContrast = Integer.parseInt( max.getValue() );
 		}
+		
+		boolean ratMode = false;
+		
+		Element ratModeElement = XMLUtil.getElement( xmlDocument.getDocumentElement(), "ratMode" );		
+		if ( ratModeElement!=null )
+		{
+			System.out.println("Setting up rat configuration.");
+			DEPTH_SENSITIVITY = 8;	
+			MAX_SIZE_OF_CANDIDATE_DETECTION = 300;
+			MIN_SIZE_SEG_OK = 20; 
+			DETECTION_SPLIT_TARGET_VOLUME = 1000;
+			//cageMode = CAGE_MODE.RATS_25;
+		}
+		
+		Element displayDepthElement = XMLUtil.getElement( xmlDocument.getDocumentElement(), "displayDepthSequence" );
+		if ( displayDepthElement!=null )
+		{
+			System.out.println("xml config file: Display depth sequence ON.");
+			addSequence( depthOut );
+			DISPLAY_DEPTH_SEQUENCE = true;			
+		}
+		
+		Element displaySubstractedElement = XMLUtil.getElement( xmlDocument.getDocumentElement(), "displaySubstractedSequence" );
+		if ( displaySubstractedElement!=null )
+		{
+			System.out.println("xml config file: Display substracted background sequence ON.");			
+			addSequence ( substractedBackgroundSequence );
+			DISPLAY_SUBSTRACTED_BACKGROUND_SEQUENCE = true;
+			
+		}
+		
+		Element parametersElement = XMLUtil.getElement( xmlDocument.getDocumentElement(), "parameters" );
+		{
+			Attr depthSensitivityAttr = XMLUtil.getAttribute( parametersElement, "depthSensitivity" );
+			if ( depthSensitivityAttr != null )
+			{
+				System.out.println("Setting depth sensitivity to " + depthSensitivityAttr.getValue() );
+				DEPTH_SENSITIVITY = Integer.parseInt( depthSensitivityAttr.getValue() );
+			}
+			
+			Attr maxDetectionSizeAttr = XMLUtil.getAttribute( parametersElement, "maxDetectionSize" );
+			if ( maxDetectionSizeAttr != null )
+			{
+				System.out.println("Setting max detection size to " + maxDetectionSizeAttr.getValue() );
+				MAX_SIZE_OF_CANDIDATE_DETECTION = Integer.parseInt( maxDetectionSizeAttr.getValue() );
+			}
+			
+			Attr minDetectionSizeAttr = XMLUtil.getAttribute( parametersElement, "minDetectionSize" );
+			if ( minDetectionSizeAttr != null )
+			{
+				System.out.println("Setting min detection size to " + minDetectionSizeAttr.getValue() );
+				MIN_SIZE_SEG_OK = Integer.parseInt( minDetectionSizeAttr.getValue() );
+			}
+
+			Attr detectionSplitTargetVolumeAttr = XMLUtil.getAttribute( parametersElement, "detectionSplitTargetVolume" );
+			if ( detectionSplitTargetVolumeAttr != null )
+			{
+				System.out.println("Setting detection split target volume to " + detectionSplitTargetVolumeAttr.getValue() );
+				DETECTION_SPLIT_TARGET_VOLUME = Integer.parseInt( detectionSplitTargetVolumeAttr.getValue() );
+			}
+			
+			Attr maxObservableDepthAttr = XMLUtil.getAttribute( parametersElement, "maxObservableDepth" );
+			if ( maxObservableDepthAttr != null )
+			{
+				System.out.println("Setting max observable depth to " + maxObservableDepthAttr.getValue() );
+				MAX_OBSERVABLE_DEPTH = Integer.parseInt( maxObservableDepthAttr.getValue() );
+			}
+			
+			
+			 
+			
+		}
+		
+		
+		
+		
+		Element epmModeElement = XMLUtil.getElement( xmlDocument.getDocumentElement(), "ElevatedPlusMazeMode" );		
+		if ( epmModeElement!=null )
+		{
+			System.out.println("Setting up ElevatedPlusMazeMode configuration.");
+			DEPTH_SENSITIVITY = 8;	
+			//MAX_SIZE_OF_CANDIDATE_DETECTION = 300;
+			//MIN_SIZE_SEG_OK = 20; 
+			//LiveMouseTracker.REFRESH_ESTIMATORS = false;
+			//DETECTION_SPLIT_TARGET_VOLUME = 300;
+		}
+
 		
 		Element cagefloorElement = XMLUtil.getElement( xmlDocument.getDocumentElement(), "cagefloor" );
 		
@@ -4369,18 +4625,39 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		//System.exit( 0 );
 		
 		// reads antenna
+		// loadUserConfigFileAntenna();
+		// a little time to lad the id of the antenna
+		
+		ArrayList<RFIDPairing> rfidPairingList = loadUserConfigFileAntennaAsRFIDPairingList();
+		rfidManager = new RFIDManager2( rfidPairingList );
 		
 		
+		
+		
+		/*
 		ArrayList<Element> antennaElementList = XMLUtil.getElements( xmlDocument.getDocumentElement(), "antenna" );
 		for ( Element antennaElement : antennaElementList )
 		{
 			double x = XMLUtil.getAttributeDoubleValue( antennaElement, "x", 0 );
 			double y = XMLUtil.getAttributeDoubleValue( antennaElement, "y", 0 );
 			float ray = XMLUtil.getAttributeFloatValue( antennaElement, "ray", 0 );
-			String comPort = XMLUtil.getAttributeValue( antennaElement, "com", "COM00");
+			String comPort = XMLUtil.getAttributeValue( antennaElement, "com", "COM0");
 			
-			rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( x,  y ) , ray , comPort ) );
+			String expectedInnerSerialNumber = "";
+			
+			Attr innerSerialNumberAttr = XMLUtil.getAttribute( antennaElement, "serialNumber" );			
+			if ( innerSerialNumberAttr != null )
+			{
+				expectedInnerSerialNumber = innerSerialNumberAttr.getValue();
+			}else
+			{
+				int val = Integer.parseInt( comPort.substring( 3 ) ); // COM12 -> 12
+				expectedInnerSerialNumber = String.format("%04d", val ); // 12 -> 0012
+			}
+			
+			rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( x,  y ) , ray , comPort, expectedInnerSerialNumber ) );
 		}
+		*/
 		
 		//rfidManager.addAntenna( new RFIDAntenna( new Point2D.Double( 136,   123 ) , size , "COM100" ) );
 		
@@ -4469,6 +4746,16 @@ implements KinectListener, ActionListener, IcyFrameListener {
 
 	MouseDetector mouseDetector ;
 
+	private void setAntennaButtonPanelEnable( boolean enabled )
+	{
+		guiPanel.getReadAntennaSerialNumber().setEnabled( enabled );			
+		guiPanel.getBtnSetAntennaSerialNumber().setEnabled( enabled );
+		guiPanel.getBtnResetSerial().setEnabled( enabled );
+		guiPanel.getBtnCheckAntennaDiscoveryAndPairing().setEnabled( enabled );
+	}
+	
+	
+	
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
@@ -4491,6 +4778,176 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		{
 			guiPanel.getNumberOfMaxAnimalTextField().setText("4");
 			setAnimals( 4 );
+		}
+		
+		if ( e.getSource() == guiPanel.getReadAntennaSerialNumber() )		
+		{			
+			setAntennaButtonPanelEnable( false );
+			
+			ThreadUtil.bgRun( new Runnable() {
+				
+				@Override
+				public void run() {
+					loadUserConfigFileAntenna();
+					for ( Antenna antenna : rfidManager.getAntennaList() )
+					{		
+						RFIDAntenna aRFID = (RFIDAntenna) antenna;						
+					}
+					
+					// wait for the antenna to read the data.
+					try { 
+						Thread.sleep( 1000 );
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					
+					for ( Antenna antenna : rfidManager.getAntennaList() )
+					{		
+						RFIDAntenna aRFID = (RFIDAntenna) antenna;
+						System.out.println( aRFID.getComPort() + ": inner serial number : " + aRFID.getInnerSerialNumber() + " location: " + aRFID.getLocation() );
+					}
+					
+					rfidManager.shutdown();
+					
+					setAntennaButtonPanelEnable( true );
+				}
+			});
+			
+			
+			
+			/*
+			loadUserConfigFileAntenna();
+			for ( Antenna antenna : rfidManager.getAntennaList() )
+			{		
+				RFIDAntenna aRFID = (RFIDAntenna) antenna;
+				System.out.println( "COM" + aRFID.getComPort() + ": inner serial number : " + aRFID.getInnerSerialNumber() );
+			}
+			rfidManager.shutdown();
+			*/
+			/*
+			RFIDAntenna a = new RFIDAntenna( new Point2D.Double(10,10), 30, "COM61" ,"0061" );
+			System.out.println( "inner serial number : " + a.getInnerSerialNumber() );
+			a.shutdown();
+			*/
+		}
+		
+		if ( e.getSource() == guiPanel.getBtnCheckAntennaDiscoveryAndPairing() )
+		{
+			
+			ThreadUtil.bgRun( new Runnable() {
+				
+				@Override
+				public void run() {
+					
+					setAntennaButtonPanelEnable( false );
+					
+					
+					ArrayList<RFIDPairing> rfidPairingList = loadUserConfigFileAntennaAsRFIDPairingList();
+					rfidManager = new RFIDManager2( rfidPairingList );
+					//rfidManager.solveAntennaComPortAffectation();
+					
+					// wait for the antenna to be read.
+					try {
+						Thread.sleep( 3000 );
+					} catch (InterruptedException ee) {
+						ee.printStackTrace();
+					}
+					
+					rfidManager.shutdown();
+					
+					setAntennaButtonPanelEnable( true );
+					
+	
+				}
+				
+			});
+			
+			/*
+			
+			ThreadUtil.bgRun( new Runnable() {
+
+				@Override
+				public void run() {
+					loadUserConfigFileAntenna();
+					// wait for the antenna to be read.
+					try {
+						Thread.sleep( 1000 );
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					rfidManager.solveAntennaComPortAffectation();
+					
+					System.out.println("Shutting down rfid manager");			
+					rfidManager.shutdown();
+					
+					guiPanel.getReadAntennaSerialNumber().setEnabled( true );			
+					guiPanel.getBtnSetAntennaSerialNumber().setEnabled( true );
+					}
+				});
+				*/
+		}
+		
+		if ( e.getSource() == guiPanel.getBtnResetSerial() )
+		{
+			setAntennaButtonPanelEnable( false );
+			
+			ThreadUtil.bgRun( new Runnable() {
+
+				@Override
+				public void run() {
+					loadUserConfigFileAntenna();
+					for ( Antenna antenna : rfidManager.getAntennaList() )
+					{		
+						RFIDAntenna aRFID = (RFIDAntenna) antenna;
+						aRFID.setInnerSerialNumber("1234"); // default number
+						aRFID.programInnerSerial();
+					}
+					try {
+						Thread.sleep( 1000 );
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+					
+					System.out.println("Shutting down rfid manager");			
+					rfidManager.shutdown();
+					
+					setAntennaButtonPanelEnable( true );
+					}
+				});			
+		}
+		
+		if ( e.getSource() == guiPanel.getBtnSetAntennaSerialNumber() )
+		{			
+			// set the antenna inner number with current config.
+			// each serial number will be the com number that is expected
+			
+			setAntennaButtonPanelEnable( false );
+			
+			ThreadUtil.bgRun( new Runnable() {
+
+				@Override
+				public void run() {
+					loadUserConfigFileAntenna();
+					for ( Antenna antenna : rfidManager.getAntennaList() )
+					{		
+						RFIDAntenna aRFID = (RFIDAntenna) antenna;
+						aRFID.programInnerSerial();
+					}
+					try {
+						Thread.sleep( 1000 );
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+					
+					System.out.println("Shutting down rfid manager");			
+					rfidManager.shutdown();
+					
+					setAntennaButtonPanelEnable( true );
+					}
+				});
+			
+			
+			
 		}
 
 		if ( e.getSource() == guiPanel.getStopButton() )
@@ -4924,7 +5381,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 					System.out.println("[ShutDown] Shutdown RFID Manager" );
 					if ( rfidManager != null )
 					{
-						rfidManager.kinectStopped();
+						rfidManager.shutdown();
 					}
 				}
 

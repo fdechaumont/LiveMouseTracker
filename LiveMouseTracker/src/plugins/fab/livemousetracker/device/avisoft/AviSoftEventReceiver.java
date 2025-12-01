@@ -71,34 +71,28 @@ public class AviSoftEventReceiver extends Thread {
 				serverSocket.receive(receivePacket);
 				sentence = new String( receivePacket.getData(), receivePacket.getOffset(), receivePacket.getLength());
 				System.out.println( "AviSoft UDP Receiver: RECEIVE: " + sentence );
-				if ( sentence.contains("start") )
+				
+				try
 				{
-					startFrame = LiveMouseTracker.getT();
-					try
+					if ( sentence.contains("start") )
 					{
+						startFrame = LiveMouseTracker.getT();
 						LiveMouseTracker.getTrackPoolOverlay().setAvisoftInfoString( right( sentence ) );
 					}
-					catch( Exception e)
-					{
-						System.out.println("Avisoft receiver : track pool overlay not ready");
-					}
-				}
 
-				if ( sentence.contains("end") )
-				{
-					String fileName = FileUtil.getFileName( sentence, false );
-		            System.out.println("File: " + fileName );
-
-					LiveMouseTracker.addEventLogToDataBase(
-							new EventLog("USV seq", null, startFrame, LiveMouseTracker.getT() , fileName ));
-					try
+					if ( sentence.contains("end") )
 					{
+						String fileName = FileUtil.getFileName( sentence, false );
+						System.out.println("File: " + fileName );
+
+						LiveMouseTracker.addEventLogToDataBase(
+								new EventLog("USV seq", null, startFrame, LiveMouseTracker.getT() , fileName ));
 						LiveMouseTracker.getTrackPoolOverlay().setAvisoftInfoString( sentence );
 					}
-					catch( Exception e)
-					{
-						System.out.println("Avisoft receiver : track pool overlay not ready");
-					}
+				}
+				catch( NullPointerException e )
+				{
+					System.out.println("AviSoftEventReceiver: Tracker not ready");
 				}
 
 				Thread.yield();

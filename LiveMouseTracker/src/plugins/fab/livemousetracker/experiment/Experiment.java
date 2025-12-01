@@ -715,12 +715,29 @@ public class Experiment {
 		// insert anonymous tracks
 		{
 			System.out.println("Save Anonymous tracks.");
-			ArrayList<TrackSegment> recordedTrackSegment = new ArrayList<TrackSegment>();
+			//ArrayList<TrackSegment> recordedTrackSegment = new ArrayList<TrackSegment>();
 
 			for ( TrackSegment trackSegment: anonymousTrackSegmentPool.getTrackSegments() )
 			{
 				try{
-					if ( filterRecordStreamingTrack( trackSegment , streamSave ) ) continue;
+					
+					boolean filterTrack = false;
+					
+					if ( filterRecordStreamingTrack( trackSegment , streamSave ) )
+					{
+						filterTrack = true;
+					}
+					if ( trackSegment.getLength() > LiveMouseTracker.NUMBER_OF_FRAME_BEFORE_SEND_DATA_TO_STREAM )
+					{
+						filterTrack = false; // the track will be flushed to database and removed.
+						System.out.println("Removing too long anonymous track for the sake of memory");
+					}					
+					
+					if ( filterTrack )
+					{
+						continue; // The track is skipped, not flush from memory
+					}
+					
 					//	recordedTrackSegment.add( trackSegment );
 
 					String sql ="";

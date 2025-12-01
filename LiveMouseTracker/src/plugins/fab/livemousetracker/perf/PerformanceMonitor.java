@@ -53,7 +53,7 @@ public class PerformanceMonitor {
 	public float getTotalDurationMs()
 	{
 		float durationMs = ( endTimeInNs - startTimeInNs ) / 1000000f;
-		System.out.println("Total duration = " + durationMs );
+		//System.out.println("Total duration = " + durationMs );
 		return durationMs;
 	}
 
@@ -106,7 +106,7 @@ public class PerformanceMonitor {
 				maxCost = "\t -MAX- " + df.format( timeStep.duration ) + " ms";
 			}
 
-			System.out.println( timeStep + " \t cum:" + df.format( cumul ) + " ms" + over + maxCost );
+			System.out.println( timeStep + " \t cumulated:" + df.format( cumul ) + " ms" + over + maxCost );
 			//System.out.println( timeStep + " \t cum:" + cumul + " ms"  );
 		}
 

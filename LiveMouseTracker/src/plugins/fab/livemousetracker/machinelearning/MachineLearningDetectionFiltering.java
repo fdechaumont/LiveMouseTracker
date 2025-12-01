@@ -106,7 +106,7 @@ public class MachineLearningDetectionFiltering {
 				}
 
 			} catch (Exception e) {
-				System.out.println("t:" + LiveMouseTracker.getT()+ " ML filter not working");
+				//System.out.println("t:" + LiveMouseTracker.getT()+ " ML filter not working");
 				//e.printStackTrace();
 			}
 		}

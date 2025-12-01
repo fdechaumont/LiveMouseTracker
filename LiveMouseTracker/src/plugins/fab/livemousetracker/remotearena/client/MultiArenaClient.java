@@ -104,25 +104,25 @@ public class MultiArenaClient extends PluginActionable implements KinectListener
 		System.out.println("Starting RFID...");
 
 		clientRFIDManager = new RemoteClientRFIDManager( this );
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,   81 ) , 30 , "COM30" ) ); // 23
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,   81 ) , 30 , "COM31" ) ); // 25
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,   81 ) , 30 , "COM32" ) ); // 13
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,   81 ) , 30 , "COM33" ) ); // 12
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,   81 ) , 30 , "COM30", null ) ); // 23
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,   81 ) , 30 , "COM31", null ) ); // 25
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,   81 ) , 30 , "COM32", null ) ); // 13
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,   81 ) , 30 , "COM33", null ) ); // 12
 
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  166 ) , 30 , "COM34" ) ); // 24
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  166 ) , 30 , "COM35" ) ); // 26
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  166 ) , 30 , "COM36" ) ); // 17
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  166 ) , 30 , "COM37" ) ); // 11
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  166 ) , 30 , "COM34", null ) ); // 24
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  166 ) , 30 , "COM35", null) ); // 26
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  166 ) , 30 , "COM36", null ) ); // 17
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  166 ) , 30 , "COM37", null ) ); // 11
 
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  249 ) , 30 , "COM38" ) ); // 20
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  249 ) , 30 , "COM39" ) ); // 19
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  249 ) , 30 , "COM40" ) ); // 16
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  249 ) , 30 , "COM41" ) ); // 14
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  249 ) , 30 , "COM38", null ) ); // 20
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  249 ) , 30 , "COM39", null ) ); // 19
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  249 ) , 30 , "COM40", null ) ); // 16
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  249 ) , 30 , "COM41", null ) ); // 14
 
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  336 ) , 30 , "COM42" ) ); // 21
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  336 ) , 30 , "COM43" ) ); // 22
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  336 ) , 30 , "COM44" ) ); // 15
-		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  336 ) , 30 , "COM45" ) ); // 18
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 133,  336 ) , 30 , "COM42", null ) ); // 21
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 214,  336 ) , 30 , "COM43", null ) ); // 22
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 296,  336 ) , 30 , "COM44", null ) ); // 15
+		clientRFIDManager.addAntenna( new RFIDAntenna( new Point2D.Double( 378,  336 ) , 30 , "COM45", null ) ); // 18
 
 	}
 

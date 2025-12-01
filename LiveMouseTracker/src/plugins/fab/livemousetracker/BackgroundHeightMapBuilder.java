@@ -84,6 +84,12 @@ public class BackgroundHeightMapBuilder {
 
 		for ( int i = 0 ; i < data.length ; i++ )
 		{
+			// TEST 2506
+			if ( candidateBuffer[i] == 10000 ) // evite la mise a jour de la map pour les valeurs impossibles
+			{
+				continue;
+			}
+			
 			if ( data[i] < candidateBuffer[i] )
 			{
 				data[i] = candidateBuffer[i];
@@ -124,6 +130,13 @@ public class BackgroundHeightMapBuilder {
 
 		for ( int i = 0 ; i < substractedImageBuffer.length ; i++ )
 		{
+			// TEST 2506
+			if ( depthImageBuffer[i] == 10000 )
+			{
+				substractedImageBuffer[i] = 0;
+				continue;
+			}
+			// FIN TEST 2506
 			substractedImageBuffer[i] = (short)( backGroundBuffer[i] - depthImageBuffer[i]);
 		}
 		substractedImage.dataChanged();

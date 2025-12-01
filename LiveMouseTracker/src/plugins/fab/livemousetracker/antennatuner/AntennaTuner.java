@@ -34,9 +34,19 @@ import plugins.fab.livemousetracker.serial.SerialDriverPlugin;
 
 public class AntennaTuner extends PluginActionable implements PluginThreaded  {
 
+	public static boolean instanceStarted = false;
+	
 	@Override
 	public void run() {
 
+		if ( instanceStarted )
+		{
+			System.out.println("Instance already started.");
+			return;
+		}
+		
+		instanceStarted = true;
+		
 		new SerialDriverPlugin();
 
 //		RFIDAntenna a = new RFIDAntenna( new Point2D.Double(0,0), 10, "COM4" );
@@ -65,7 +75,7 @@ public class AntennaTuner extends PluginActionable implements PluginThreaded  {
 
 			for ( SerialPort port : list )
 			{
-				RFIDAntenna a = new RFIDAntenna( new Point2D.Double(0,0), 10, port.getSystemPortName() );
+				RFIDAntenna a = new RFIDAntenna( new Point2D.Double(0,0), 10, port.getSystemPortName(), null  );
 				try {
 					Thread.sleep( 3000 );
 				} catch (InterruptedException e) {

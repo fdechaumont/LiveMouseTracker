@@ -233,16 +233,18 @@ public class TrackPoolOverlay extends Overlay {
 
 		if ( testSubPartMode )
 		{
-			drawCenteredHint(gAbsolute,
+			drawCenteredHint(g , //gAbsolute,
 					"*** SUBPART MODE TEST ON ***",
-					canvas.getWidth()/2, 10, Color.red, Color.white);
+					sequence.getWidth()/2, 10, Color.red, Color.white);
+					//canvas.getWidth()/2, 10, Color.red, Color.white);
 		}
 
 		if ( testAnimalIdentityMode )
 		{
-			drawCenteredHint(gAbsolute,
+			drawCenteredHint(g , //gAbsolute,
 					"*** ANIMAL MODE TEST ON ***",
-					canvas.getWidth()/2, 60, Color.red, Color.white);
+					//canvas.getWidth()/2, 60, Color.red, Color.white);
+					sequence.getWidth()/2, 60, Color.red, Color.white);
 		}
 
 		String memoryTxt="";
@@ -271,9 +273,10 @@ public class TrackPoolOverlay extends Overlay {
 
 		if ( !LiveMouseTracker.getBackgroundHeightMapBuider().isReady() )
 		{
-			drawCenteredHint(gAbsolute,
+			drawCenteredHint(g , //gAbsolute,
 					"*** STANDBY : Computing Background ***",
-					canvas.getWidth()/2, 10, Color.red, Color.white);
+					//canvas.getWidth()/2, 10, Color.red, Color.white);
+					sequence.getWidth()/2, 10, Color.red, Color.white);
 		}
 
 		int initLearningT = LiveMouseTracker.getInitLearningT();
@@ -281,9 +284,10 @@ public class TrackPoolOverlay extends Overlay {
 		if ( currentT < initLearningT )
 		{
 			int frame = initLearningT - currentT;
-			drawCenteredHint(gAbsolute,
+			drawCenteredHint(g, //gAbsolute,
 					"*** Machine learning STANDBY : Init in " + frame + " frames ***",
-					canvas.getWidth()/2, 30, Color.red, Color.white);
+					//canvas.getWidth()/2, 30, Color.red, Color.white);
+					sequence.getWidth()/2, 30, Color.red, Color.white);
 		}
 
 
@@ -300,9 +304,10 @@ public class TrackPoolOverlay extends Overlay {
 
 			SimpleDateFormat dateFormatter = new SimpleDateFormat("E dd MMMM(MM) yyyy - HH:mm:ss", Locale.US );
 			Date date = new Date();
-			drawCenteredHint(gAbsolute,
+			drawCenteredHint(g, //gAbsolute,
 					dateFormatter.format( date ) + " - " + memoryTxt,
-					canvas.getWidth()/2, 0, Color.black , Color.white);
+					//canvas.getWidth()/2, 0, Color.black , Color.white);
+					sequence.getWidth()/2, 0, Color.black , Color.white);
 
 			/*
 			drawCenteredHint(gAbsolute,
@@ -310,14 +315,15 @@ public class TrackPoolOverlay extends Overlay {
 					canvas.getWidth()/2, 30, Color.black , Color.white);
 			 */
 
-			drawCenteredHint(gAbsolute,
-					"temp:"+ LiveMouseTracker.sensorMonitor.getTemperature() + " �C "+
+			drawCenteredHint( g, //gAbsolute,
+					"temp:"+ LiveMouseTracker.sensorMonitor.getTemperature() + " °C "+
 					"hum:"+LiveMouseTracker.sensorMonitor.getHumidity() + "% "+
 					"snd:"+LiveMouseTracker.sensorMonitor.getSoundLevel() + " "+
 					"light(all):"+LiveMouseTracker.sensorMonitor.getLightInfraredAndVisible() + " "+
 					"light(vis):"+LiveMouseTracker.sensorMonitor.getLightVisible()
 					,
-					canvas.getWidth()/2, 18, Color.black , Color.white);
+					//canvas.getWidth()/2, 18, Color.black , Color.white);
+					sequence.getWidth()/2, 18, Color.black , Color.white);
 
 
 			Period diffStartAndCurrentTime = new Period( LiveMouseTracker.getStartTime() , new DateTime() );
@@ -333,44 +339,47 @@ public class TrackPoolOverlay extends Overlay {
 
 
 
-			drawCenteredHint(gAbsolute,
+			drawCenteredHint(g, // gAbsolute,
 					"t:"+LiveMouseTracker.getT() + " " + Util.getTimeStamp(LiveMouseTracker.getT()) +
 					" rt:" + formatter.print( diffStartAndCurrentTime ) +
 					" cpu:" + cpuStr +"ms "+SystemUtil.getCpuLoad()+"%"
 					//" nbOver: " + LiveMouseTracker.nbOver
 					//+" !proc: " + (int)( LiveMouseTracker.nbImageGrabbed-LiveMouseTracker.nbImageProcessed )
 					,
-					canvas.getWidth()/2, canvas.getHeight()-50, bgColor , Color.white);
+					//canvas.getWidth()/2, canvas.getHeight()-50, bgColor , Color.white);
+					sequence.getWidth()/2, sequence.getHeight()-50, bgColor , Color.white);
 
 			if( aviSoftInfoDisplayCounter > 0 )
 			{
-				drawCenteredHint(gAbsolute,
+				drawCenteredHint(g, //gAbsolute,
 						"aviSoft:"+aviSoftInfoString,
-						canvas.getWidth()/2, canvas.getHeight()-80, bgColor , Color.orange);
+						//canvas.getWidth()/2, canvas.getHeight()-80, bgColor , Color.orange);
+						sequence.getWidth()/2, sequence.getHeight()-80, bgColor , Color.orange);
 			}
 			
 			if( UDPEventInfoStringDisplayCounter > 0 )
 			{
-				drawCenteredHint(gAbsolute,
+				drawCenteredHint(g, //gAbsolute,
 						"UDP Event:"+UDPEventInfoString,
-						canvas.getWidth()/2, canvas.getHeight()-80, bgColor , Color.yellow);
+						//canvas.getWidth()/2, canvas.getHeight()-80, bgColor , Color.yellow);
+						sequence.getWidth()/2, sequence.getHeight()-80, bgColor , Color.yellow);
 			}
 			
 			if( RFIDStopEventDisplayCounter > 0 )
 			{
-				drawCenteredHint(gAbsolute,
+				drawCenteredHint(g,//gAbsolute,
 						"RFID STOPPED: "+RFIDStopEventInfoString,
-						canvas.getWidth()/2, canvas.getHeight()-100, bgColor , Color.red);
+						//canvas.getWidth()/2, canvas.getHeight()-100, bgColor , Color.red);
+						sequence.getWidth()/2, sequence.getHeight()-100, bgColor , Color.red);
 			}
 
-
-			
 			
 			if( LiveMouseTracker.LOCK_BACKGROUND )
 			{
-				drawCenteredHint(gAbsolute,
+				drawCenteredHint(g, //gAbsolute,
 						"BG Locked",
-						canvas.getWidth()/4, canvas.getHeight()-80, bgColor , Color.orange);
+						//canvas.getWidth()/4, canvas.getHeight()-80, bgColor , Color.orange);
+						sequence.getWidth()/4, sequence.getHeight()-80, bgColor , Color.orange);
 			}
 
 		}
@@ -486,11 +495,17 @@ public class TrackPoolOverlay extends Overlay {
 
 			int t = clock.getT() ;
 
-			int y = 100;
+			int x = 0;
+			int y = sequence.getHeight()-20;
 			for ( Animal animal : animalPool.getAnimalListActive() )
 			{				
-				GraphicsUtil.drawHint( g, animal.getRfidID(), 100, y, Color.black, Color.orange );
-				y+=20;
+				GraphicsUtil.drawHint( g, animal.getRfidID(), x , y, Color.black, Color.orange );
+				x+=100;
+				if ( x >= 400 )
+				{
+					x = 0;
+					y-=20;
+				}
 			}
 			
 			for ( Animal animal : animalPool.getAnimalList() )

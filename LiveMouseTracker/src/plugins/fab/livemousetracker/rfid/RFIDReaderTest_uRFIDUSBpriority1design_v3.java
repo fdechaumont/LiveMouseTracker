@@ -54,7 +54,7 @@ implements PluginThreaded , AntennaReadListener {
 //		antennaList.add( new RFIDAntenna2( new Point2D.Double( 100,  50 ) , 0 , "COM5" ) );
 //		antennaList.add( new RFIDAntenna2( new Point2D.Double(  50,   0 ) , 0 , "COM7" ) );
 //		antennaList.add( new RFIDAntenna2( new Point2D.Double(  50, 100 ) , 0 , "COM8" ) );
-		antennaList.add( new RFIDAntenna( new Point2D.Double(   0,  50 ) , 0 , "COM8" ) );
+		antennaList.add( new RFIDAntenna( new Point2D.Double(   0,  50 ) , 0 , "COM8", null ) );
 
 //		antennaList.add( new RFIDAntenna( new Point2D.Double( 133,   81 ) , 20 , "COM16" ) );
 //		antennaList.add( new RFIDAntenna2( new Point2D.Double( 214,   81 ) , 20 , "COM25" ) );

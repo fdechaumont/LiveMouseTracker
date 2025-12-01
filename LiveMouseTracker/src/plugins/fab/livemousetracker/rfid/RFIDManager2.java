@@ -19,10 +19,18 @@ package plugins.fab.livemousetracker.rfid;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import com.mchange.v2.lang.ThreadUtils;
 
 import icy.common.listener.AcceptListener;
 import icy.main.Icy;
+import icy.system.thread.Processor;
+import icy.system.thread.ThreadUtil;
 import icy.type.point.Point3D;
+
+//import com.fazecast.jSerialComm.SerialPort;
+
 import plugins.fab.kinectdriver.KinectStreamer.StreamerState;
 import plugins.fab.livemousetracker.Animal;
 import plugins.fab.livemousetracker.LiveMouseTracker;
@@ -40,7 +48,19 @@ public class RFIDManager2 implements AntennaReadListener, AcceptListener {
 	/** All events available loaded from file. */
 	ArrayList<AntennaReadEvent> allEventList = new ArrayList<AntennaReadEvent>();
 
-	public RFIDManager2() {
+	boolean shutDownDone = false;
+	
+	ArrayList<RFIDPairing> rfidPairingList;
+	
+	public RFIDManager2()
+	{
+		System.out.println("Constructor for reading/writing innerSerial in antenna only.");
+	}
+	
+	public RFIDManager2( ArrayList<RFIDPairing> rfidPairingList ) {
+		this.rfidPairingList = rfidPairingList;
+		//System.out.println( "RFIDManager2 : rfidPairingList : " + rfidPairingList );
+		solveAntennaComPortAffectation();		
 		Icy.getMainInterface().addCanExitListener( this );
 	}
 
@@ -57,6 +77,27 @@ public class RFIDManager2 implements AntennaReadListener, AcceptListener {
 //
 //	}
 
+	public void shutdown()
+	{
+		if ( shutDownDone )
+		{
+			System.out.println("RFIDManager 2 already shutted down");
+			return;
+		}
+		
+		Icy.getMainInterface().removeCanExitListener( this );
+		for ( Antenna antenna : antennaList )
+		{
+			ThreadUtil.bgRun( new Runnable() {				
+				@Override
+				public void run() {
+					antenna.shutdown();					
+				}
+			});			
+		}
+		shutDownDone = true;
+	}
+	
 	public void removeAntenna( Antenna rfidAntenna )
 	{
 		synchronized ( antennaList) {
@@ -547,6 +588,218 @@ public class RFIDManager2 implements AntennaReadListener, AcceptListener {
 		}
 
 		return closestAntenna;
+	}
+
+	public boolean areAllAntennaUsingAnInnerSerialNumber()
+	{		
+		for ( Antenna a : getAntennaList() )
+		{
+			RFIDAntenna ra = (RFIDAntenna) a;
+			
+			if ( ra.getInnerSerialNumber() == "1234" ) // can't say, antenna is not programmed
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/*
+	public boolean areAllAntennaCorrectlyAffected()
+	{
+		// TODO: manage antenne deco
+		boolean allCorrect = true;
+		for ( Antenna a : getAntennaList() )
+		{
+			RFIDAntenna ra = (RFIDAntenna) a;
+			
+			if ( ra.getInnerSerialNumber() == "1234" ) // can't say, antenna are not programmed
+			{
+				continue;
+			}
+			
+			
+		}
+		return allCorrect;
+	}
+	*/
+	
+	public void solveAntennaComPortAffectation() {
+
+		 
+		System.out.println("-------- Start com tester:");
+		System.out.println("-------- port name list:");
+		
+		/*
+		SerialPort[] list = SerialPort.getCommPorts();
+		*/
+		ArrayList<COMTester> comTestList = new ArrayList();
+		
+		ArrayList<String> comList = new ArrayList();
+		for ( int i=3 ; i< 100; i++ )
+		{
+			comList.add( "COM"+i );
+		}
+
+		ArrayList<String> portNotUsedList = new ArrayList<String>();
+		/*
+		portNotUsedList.add( "COM1" );
+		portNotUsedList.add( "COM2" );
+		portNotUsedList.add( "COM19" );
+		portNotUsedList.add( "COM29" );
+		*/
+		
+		//for ( SerialPort port : list )
+		for ( String port : comList )
+		{			
+			boolean usePort = true;
+			for ( String s : portNotUsedList )
+			{
+				//if ( s.equals( port.getSystemPortName() ) )
+				if ( s.equals( port ) )
+				{
+					System.out.println("solveAntennaComPortAffectation: port ignored: " + port );
+					usePort = false;
+				}
+			}			
+			
+			if ( usePort == false )
+			{
+				continue;
+			}
+			//RFIDAntenna a = new RFIDAntenna( null, 0, port, null  );
+			System.out.println("Starting COM tester on port " + port );
+			COMTester c = new COMTester( port );
+			/*
+			try { // test to see if it unlocks the serial init
+				Thread.sleep( 50 );
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			*/
+			comTestList.add( c );
+
+		}
+				
+		
+		// time for the comtester to retreive serial number
+		try {
+			Thread.sleep( 500 );
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		for ( COMTester comTester : comTestList )			
+		{
+			System.out.println("waiting for comTester on port " + comTester.comPort );
+			try {
+				//comTester.join( 3000 );
+				comTester.join( 100 );
+			} catch (InterruptedException e) {
+				System.out.println("No response from some comTester in 3000ms");
+				e.printStackTrace();
+			}
+		}
+
+		for ( COMTester comTester : comTestList )			
+		{
+			System.out.println( "COMTester: " + comTester.comPort + "\tinnerSerial: " + comTester.innerSerialNumber  + "\tis and RFID reader: " + comTester.isRFIDReader() );
+		}
+		
+		System.out.println("-------- End com tester.");
+		
+		// read COM port and expected location2D
+		
+		for ( RFIDPairing rfidPairing : rfidPairingList )
+		{
+			rfidPairing.submitCandidates( comTestList );
+		}
+		
+		for ( RFIDPairing rfidPairing : rfidPairingList )
+		{
+			this.addAntenna( rfidPairing.createAntenna() );
+		}
+
+		System.out.println("---------- Solve port affection: done.");
+		
+		
+		
+		
+		
+		
+		
+		
+		/*
+		
+		if ( areAllAntennaUsingAnInnerSerialNumber() == false )
+		{
+			System.out.println("SolverAntennaComPortAffectation: can't solve problem: all antenna are not programmed.");
+			return;
+		}
+		System.out.println("Starting SolverAntennaComPortAffectation...");
+		
+		HashMap<String, Point2D> h = new HashMap<String, Point2D>();
+		
+		for ( Antenna a : getAntennaList() )
+		{
+			RFIDAntenna ra = (RFIDAntenna) a;
+			
+			h.put( ra.getInnerSerialNumber(), ra.location );
+			System.out.println( ra.getInnerSerialNumber() + " -> " + ra.location );
+			
+		}
+		
+		
+		System.out.println("-------- port name list:");
+		
+		SerialPort[] list = SerialPort.getCommPorts();
+		for ( SerialPort port : list )
+		{
+			System.out.println( port.getSystemPortName() );
+		}
+		
+		
+		// affecting
+		System.out.println("----- affecting antenna");
+		
+		for ( Antenna a : getAntennaList() )
+		{
+			RFIDAntenna ra = (RFIDAntenna) a;
+			int comNumber = Integer.parseInt( ra.getInnerSerialNumber() );
+			String comName = "COM"+comNumber;
+			
+			System.out.println( ra );
+			
+			Point2D expectedLocation = h.get( ra.getInnerSerialNumber() );
+			//System.out.println( ra.comPort +" " + comName +" "+ ra.comPort.equals( comName ) );
+			System.out.println( "expected location: " + ra.getInnerSerialNumber() + " : "+ expectedLocation );
+			
+			
+			if ( ra.comPort.equals( comName ) )
+			{
+				System.out.println( ra.comPort + " : antenna location ok: " + ra.location + " innerSerial: "  + ra.getInnerSerialNumber() );
+			}else
+			{
+				System.out.println("Affecting antenna location " + ra.location + " to " + expectedLocation + " (com port " + ra.comPort + " should be " + ra.getInnerSerialNumber() + ") (CORRECTED)");
+				ra.location = expectedLocation;
+			}
+			
+			
+			
+		}
+		
+		*/
+		
+		/**
+		if ( areAllAntennaCorrectlyAffected() )
+		{
+			System.out.println("All antenna are correctly affected.");
+			return;
+		}*/
+		
+		
+		
+		
 	}
 
 }

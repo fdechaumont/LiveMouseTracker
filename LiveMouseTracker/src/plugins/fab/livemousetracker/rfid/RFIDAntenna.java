@@ -17,6 +17,7 @@
 */
 package plugins.fab.livemousetracker.rfid;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -24,7 +25,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
-
+import icy.util.GraphicsUtil;
 import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortTimeoutException;
@@ -51,7 +52,11 @@ public class RFIDAntenna extends Thread implements Antenna {
 	boolean faulty = false;
 	int nbEvent = 0;
 	int nbTryRead = 0;
+	String innerSerialNumber =""; 			// serial number of the connected reader
+	String expectedInnerSerialNumber =""; 	// serial number that should match this reader
 
+	String lastReadOrder = "";
+	
 //	String state="start";
 
 	enum AntennaState
@@ -74,21 +79,24 @@ public class RFIDAntenna extends Thread implements Antenna {
 		return comPort;
 	}
 
-	public RFIDAntenna( Point2D location , float ray , String comPort ) {
+	public RFIDAntenna( Point2D location , float ray , String comPort, String expectedInnerSerialNumber ) {
 		super("Thread " + comPort);
 
 		this.ray = ray;
 		this.location = location;
 		this.comPort = comPort;
+		this.expectedInnerSerialNumber = expectedInnerSerialNumber;
 
 		System.out.println("Starting RFID reader on port " + comPort );
 		serial = new SerialPort( comPort );
 		try {
+			System.out.println("Starting RFID open port " + comPort );
 			serial.openPort();
 			serial.setParams( 9600, 8, 1, 0 );
+			System.out.println("Starting RFID params ok " + comPort );
 			write( "ST2" ); // Set read animal tags.
 			write( "SB1" ); // Disable read buzzer
-			write( "SL4" ); // Leds off
+			write( "SL4" ); // Leds off						
 			switchOff();
 
 		} catch (SerialPortException e) {
@@ -97,6 +105,7 @@ public class RFIDAntenna extends Thread implements Antenna {
 			faulty = true;
 		}
 
+		
 		start();
 	}
 
@@ -155,6 +164,92 @@ public class RFIDAntenna extends Thread implements Antenna {
 		readData ="";
 	}
 
+	
+	
+	public String getInnerSerialNumber()
+	{
+		return this.innerSerialNumber;
+	}
+	
+	public void setInnerSerialNumber( String innerSerialNumber )
+	{
+		this.innerSerialNumber = innerSerialNumber ;
+	}
+	
+	
+	
+	/** **/
+	
+	public void programInnerSerial()
+	{
+		
+		System.out.println("Programming RFID reader inner serial: " + expectedInnerSerialNumber + " --> "+ comPort +" ..." );
+
+		if ( expectedInnerSerialNumber.length() != 4 )
+		{
+			System.out.println("Inner serial must be 4 hex long 0-F ");
+			return;
+		}
+		
+		for ( int i = 0; i<10; i++ )
+		{
+			write( "SSN"+expectedInnerSerialNumber );
+		}
+		
+		System.out.println("Programming " + comPort +" done" );
+	}
+	
+	/** This should not be called if the antenna is enabled. */	
+	private String readInnerSerialNumber()
+	{
+		if ( faulty ) return "Faulty";
+
+		try {
+			Thread.sleep( 300 ); // 70
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		flushData();
+		write("RSN");
+		
+		try {
+			Thread.sleep( 500 );
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
+
+		byte[] data;
+		try {
+
+			data = serial.readBytes();
+			if ( data != null )
+			{
+				for ( byte b : data )
+				{
+					if ( b!= 13 )
+					{
+						readData+= (char)b;
+					}
+				}
+				//System.out.println("DATA READ: " + readData );
+			}
+			if ( readData.length() > 0 )
+			{
+				this.innerSerialNumber = readData;
+				System.out.println( this.innerSerialNumber );
+				this.innerSerialNumber = this.innerSerialNumber.subSequence( 0 , 4 ).toString();
+			}
+
+		} catch (SerialPortException e ) {
+			e.printStackTrace();
+		}catch( NumberFormatException e ){
+			e.printStackTrace();
+		}
+		
+		return this.innerSerialNumber;
+	}
+	
 	/** This should not be called if the antenna is enabled. */
 	public double readFrequency()
 	{
@@ -173,6 +268,8 @@ public class RFIDAntenna extends Thread implements Antenna {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		
+		if ( stopReadingThread ) return 0;
 
 		flushData();
 		write("MOF");
@@ -183,6 +280,8 @@ public class RFIDAntenna extends Thread implements Antenna {
 			e1.printStackTrace();
 		}
 
+		if ( stopReadingThread ) return 0;
+		
 		byte[] data;
 		try {
 
@@ -218,10 +317,19 @@ public class RFIDAntenna extends Thread implements Antenna {
 	}
 
 	@Override
+	public String toString() {
+		return "Antenna " + this.comPort + " innerSerial: " + this.innerSerialNumber;
+	}
+	
+	@Override
 	public void run() {
 
 		setPriority( Thread.MIN_PRIORITY );
+		readInnerSerialNumber();
 		readFrequency();
+
+		
+		
 
 		/** Workaround over the switch off that is not working each time
 		 * to count the number of cycle in disable mode, to send several switch off orders */
@@ -241,6 +349,22 @@ public class RFIDAntenna extends Thread implements Antenna {
 				//				System.out.println("O");
 
 				//		Thread.sleep( 100 ); // 15
+				
+				if ( ! lastReadOrder.startsWith("SRA" ) )
+				{
+					switchOff();
+					switchOn();
+				}
+				
+				try {
+					Thread.sleep( 100 ); // 70
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				
+				readData();
+				
+				/*//previous version: 
 				switchOn();
 
 				try {
@@ -255,6 +379,8 @@ public class RFIDAntenna extends Thread implements Antenna {
 				//		Thread.sleep( 100 );
 				switchOff();
 				//		Thread.sleep( 50 );
+				 *
+				 */
 			}else
 			{
 				flushData();
@@ -321,6 +447,7 @@ public class RFIDAntenna extends Thread implements Antenna {
 							if ( s.length() == 12 )
 							{
 //								System.out.println("" + comPort + " / National RFID tag: " + s );
+								lastReadOrder = "RFIDREAD"; // this is to reset the lastReadOrder value SRA by RFIDOrder so that the reader gets switch off and on again
 								String id=s;
 								AntennaReadEvent event = new AntennaReadEvent(
 										LiveMouseTracker.getT(),
@@ -368,6 +495,7 @@ public class RFIDAntenna extends Thread implements Antenna {
 	void write( String string )
 	{
 		try {
+			lastReadOrder = string;
 			serial.writeString( string );
 			serial.writeByte( (byte) 13 );
 		} catch (SerialPortException e) {
@@ -381,6 +509,11 @@ public class RFIDAntenna extends Thread implements Antenna {
 
 		try {
 			stopReadingThread = true;
+			try {
+				Thread.sleep( 1000 ); // wait for the longest operation that could occur like read frequency
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			serial.closePort();
 			System.out.println("RFID Antenna "+ comPort + " shutdown.");
 		} catch (SerialPortException e) {
@@ -391,6 +524,8 @@ public class RFIDAntenna extends Thread implements Antenna {
 
 	public void paint(Graphics2D g) {
 
+		g = (Graphics2D) g.create();
+		
 		if ( enabled )
 		{
 			g.setColor( Color.green.darker() );
@@ -410,8 +545,9 @@ public class RFIDAntenna extends Thread implements Antenna {
 		g.draw( ellipse2D );
 		g.setColor( Color.yellow );
 
-
-		DrawUtil.drawCenteredString( g, comPort.substring(3), (int)location.getX(), (int)location.getY()-10 );
+		GraphicsUtil.mixAlpha(g, AlphaComposite.SRC_OVER, 0.5f);
+		
+		DrawUtil.drawCenteredString( g, comPort.substring(3) + "/" + this.innerSerialNumber , (int)location.getX(), (int)location.getY()-10 );
 		//DrawUtil.drawCenteredString( g, ""+onOffstate, (int)location.getX(), (int)location.getY() );
 //		g.drawString( comPort + "/" + onOffstate, (int)location.getX(), (int)location.getY() );
 /*		g.drawString( "f:"+frequency, (int)location.getX(), (int)location.getY()+10 );
