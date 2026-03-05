@@ -44,10 +44,6 @@ public class TTLSynchronizer extends Thread {
     public void sendTTL( TTL_SIGNAL signal )
     {
     	if ( faulty ) return;
-    	if ( !this.serial.isOpened() )
-    	{
-    		return;
-    	}
     	// send signal ( u for up, l for low, and number for pin )
     	switch( signal )
     	{
@@ -76,10 +72,6 @@ public class TTLSynchronizer extends Thread {
         String s =" ";
         while ( s!=null )
         {
-        	if ( !this.serial.isOpened() )
-        	{
-        		break;
-        	}
             try {
                 s = serial.readString();
             } catch (SerialPortException e) {
@@ -157,7 +149,7 @@ public class TTLSynchronizer extends Thread {
 		s+=""+digitalPin+"-";
 
 		try {
-			serial.writeString( s );
+			serial.writeString( s+"\n" );
 //			System.out.println( s );
 
 			//System.out.println( s );
