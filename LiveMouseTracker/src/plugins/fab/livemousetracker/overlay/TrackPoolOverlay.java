@@ -60,7 +60,7 @@ import icy.system.profile.Chronometer;
 import icy.type.point.Point5D;
 import icy.type.point.Point5D.Double;
 import icy.util.GraphicsUtil;
-import javafx.scene.layout.Background;
+//import javafx.scene.layout.Background;
 import plugins.fab.livemousetracker.Animal;
 import plugins.fab.livemousetracker.FrameInfo;
 import plugins.fab.livemousetracker.LiveMouseTracker;

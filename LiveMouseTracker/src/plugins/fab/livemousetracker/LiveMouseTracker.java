@@ -88,7 +88,7 @@ import icy.type.collection.array.Array1DUtil;
 import icy.type.point.Point3D;
 import icy.util.XMLUtil;
 import loci.formats.FormatException;
-import plugins.fab.azure.kinect.TestAzureKinectDriverFabMultiDoubleCam;
+//import plugins.fab.azure.kinect.TestAzureKinectDriverFabMultiDoubleCam;
 //import plugins.fab.azure.kinect.TestAzureKinectDriverFab3D;
 //import plugins.fab.azure.kinect.TestAzureKinectDriverFabMultiDoubleCam;
 import plugins.fab.kinectdriver.KinectData;
@@ -164,7 +164,7 @@ import weka.core.Instances;
 public class LiveMouseTracker extends PluginActionable
 implements KinectListener, ActionListener, IcyFrameListener {
 
-	String version = "2025";
+	String version = "december 2025";
 	/** Warning: This depth sequence is the one from the kinect, It's not a Z-corrected version. Use LiveMouseTracker.depthImage instead */
 	public static boolean DISPLAY_DEPTH_SEQUENCE = false;
 	public static final boolean DISPLAY_DIF_INFRA_SEQUENCE = false;
