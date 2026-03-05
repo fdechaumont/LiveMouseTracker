@@ -1,1 +1,0 @@
-"azure kinect driver_v1.3.exe" >logCameraDriver.txt
