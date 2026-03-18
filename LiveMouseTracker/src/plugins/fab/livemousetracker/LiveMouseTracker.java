@@ -4530,12 +4530,14 @@ implements KinectListener, ActionListener, IcyFrameListener {
 				MIN_SIZE_SEG_OK = Integer.parseInt( minDetectionSizeAttr.getValue() );
 			}
 
+			/*
 			Attr detectionSplitTargetVolumeAttr = XMLUtil.getAttribute( parametersElement, "detectionSplitTargetVolume" );
 			if ( detectionSplitTargetVolumeAttr != null )
 			{
 				System.out.println("Setting detection split target volume to " + detectionSplitTargetVolumeAttr.getValue() );
 				DETECTION_SPLIT_TARGET_VOLUME = Integer.parseInt( detectionSplitTargetVolumeAttr.getValue() );
 			}
+			*/
 			
 			Attr maxObservableDepthAttr = XMLUtil.getAttribute( parametersElement, "maxObservableDepth" );
 			if ( maxObservableDepthAttr != null )
