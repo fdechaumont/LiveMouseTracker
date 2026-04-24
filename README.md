@@ -18,6 +18,10 @@ Developed by Fabrice de Chaumont, Elodie Ey, Nicolas Torquet, Thibault Lagache, 
 
 - [How It Works](#how-it-works)
 - [Hardware Requirements](#hardware-requirements)
+- [Getting Started](#getting-started)
+- [Arena Configuration](#arena-configuration)
+- [RFID Setup](#rfid-setup)
+- [Multi-Setup Room Configuration](#multi-setup-room-configuration)
 - [Tracking Pipeline](#tracking-pipeline)
   - [1. Background Model](#1-background-model)
   - [2. Foreground Detection](#2-foreground-detection)
@@ -27,9 +31,13 @@ Developed by Fabrice de Chaumont, Elodie Ey, Nicolas Torquet, Thibault Lagache, 
   - [6. Identity Resolution](#6-identity-resolution)
 - [Ultrasonic Vocalization Analysis](#ultrasonic-vocalization-analysis)
 - [Behavioral Event Detection](#behavioral-event-detection)
+- [External Event Integration](#external-event-integration)
+- [Validated Performance](#validated-performance)
 - [Data Output](#data-output)
 - [Post-Processing](#post-processing)
+- [Troubleshooting](#troubleshooting)
 - [Analysis Ecosystem](#analysis-ecosystem)
+- [Historical Context and Related Systems](#historical-context-and-related-systems)
 - [User Interface](#user-interface)
 - [Building and Installation](#building-and-installation)
 - [Source Layout](#source-layout)
@@ -63,7 +71,165 @@ The system runs indefinitely in **streaming mode**, periodically flushing old da
 | **Arduino** | Serial (1M baud) | TTL synchronization pulses for external equipment: experiment start/stop, per-frame sync, and behavioral event triggers. |
 | **Environmental sensors** | (via Arduino/SensorMonitor) | Temperature, humidity, sound level, visible and IR light — logged per frame. |
 
-**Operating system**: Windows 64-bit (required by Kinect native DLLs).
+**Operating system**: Windows 64-bit (required by Kinect native DLLs). Kinect SDK 2.0 requires Windows 10, 8.1, or 8 (64-bit); SDK 1.8 for Windows 7 or 32-bit OS.
+
+**Recommended PC**: AMD Ryzen 7 2700X, 16 GB RAM. No GPU required — LMT is CPU-only. Microsoft recommends a dual-core processor, 4 GB RAM, a USB 3.0 port, and a DirectX 11 compatible graphics card for the Kinect.
+
+**Total system cost**: ~2 000 €, including the computer, RFID antenna/readers, Kinect v2 + adapter, cage, and tubes. This is a DIY system; assembly instructions are available (see Getting Started below).
+
+**Kinect verification**: after installing the Kinect SDK, launch the Kinect Configuration Verifier tool and confirm a stable 30 fps output. Any non-constant or lower value corrupts tracking data.
+
+---
+
+## Getting Started
+
+### Quick Start
+
+1. **Download** the latest LMT distribution from [micecraft.org/lmt](https://micecraft.org/lmt)
+2. **Unzip** the archive
+3. **Install Java 8** (64-bit) — required
+4. **Configure antenna COM ports** (see [RFID Setup](#rfid-setup) below)
+5. **Launch** by double-clicking the `.bat` file — see critical note below
+6. A **sample dataset** is available from [micecraft.org/lmt](https://micecraft.org/lmt) to test the analysis pipeline before investing in hardware
+
+### Launching LMT
+
+**You must launch LMT using the provided `.bat` file**, not by running `icy.exe` directly. The bat file:
+
+1. Copies native DLLs (`jssc.dll`, `ufdw_j4k2_64bit.dll`) to `lib/win64/`
+2. Launches ICY with JVM parameters tuned for real-time operation:
+   - **6 GB heap** (`-Xmx6G`)
+   - **CMS garbage collector** optimized for low-latency (`-XX:+UseConcMarkSweepGC`, `CMSInitiatingOccupancyFraction=60`)
+   - **DirectDraw disabled** (`-Dsun.java2d.noddraw=true`) for rendering stability
+3. Starts the `LMTLauncher` bootstrap plugin, which sets a `launchOK` flag that `LiveMouseTracker` validates before proceeding
+
+Launching via `icy.exe` causes time drift (red flashes in the recording window, >1 second drift per 3 hours of recording).
+
+### DIY Assembly
+
+The hardware is assembled from off-the-shelf parts. An IKEA-style PDF with a complete **shopping list and assembly instructions** is available from:
+- [micecraft.org/lmt](https://micecraft.org/lmt) (Downloads → Blueprints)
+- [livemousetracker.org](https://livemousetracker.org/) (Shopping list and assembly instructions)
+
+### Kinect Calibration
+
+1. Launch the `LiveMouseTrackerCalibration` plugin from the Live Mouse Tracker tab
+2. The view shows red, orange, and green dots — **all green means calibrated**
+3. Maximize the frame and zoom in/out with the mouse wheel
+4. Camera height is approximately 63 cm, but calibrate via the software, **not with a ruler**
+
+### Tracking Initialization
+
+After launching the main `Live Mouse Tracker` plugin and selecting experiment parameters, the system initializes tracking within approximately **20 seconds** of observation. Green antenna circles indicate successful RFID initialization.
+
+### Additional Resources
+
+- **Analysis tutorial**: [Google Slides presentation](https://docs.google.com/presentation/d/1wR7JM2vq5ZjugrwDe4YuuKJm0MWIvkHAvrOH7mQNOEk) — "Data Analysis in Python for Biologists" by Fabrice de Chaumont & Elodie Ey
+- **Jupyter examples**: [lmt-analysis/examples/](https://github.com/fdechaumont/lmt-analysis/tree/master/LMT/examples) — trajectory drawing, position extraction, event timelines
+- **Rebuild events notebook**: [lmt-analysis/scripts/](https://github.com/fdechaumont/lmt-analysis/tree/master/LMT/scripts) — rebuild all behavioral events from raw detection data
+- **Environmental sensor kit**: DIY kit downloadable from [livemousetracker.org](https://livemousetracker.org/)
+- **New-user checklist**: available from [livemousetracker.org](https://livemousetracker.org/)
+- **Community support**: Discord (link via [micecraft.org/lmt](https://micecraft.org/lmt)), email: fabrice.de.chaumont@gmail.com / eye@igbmc.fr
+
+---
+
+## Arena Configuration
+
+LMT uses an XML configuration file (`lmt-config.xml`) placed in the ICY folder to define the arena geometry, antenna positions, and detection parameters. To switch configurations, rename the desired config file to `lmt-config.xml` and place it in the ICY root folder.
+
+### Config File Format
+
+```xml
+<root>
+  <cagefloor>
+    <polygon wallsize="36">  <!-- wall thickness in pixels; use 2-3 for wall-less arenas -->
+      <point x="114" y="63"></point>
+      <point x="398" y="63"></point>
+      <point x="398" y="353"></point>
+      <point x="114" y="353"></point>
+    </polygon>
+  </cagefloor>
+
+  <antenna x="131.5" y="80.5" ray="35" com="COM30"></antenna>
+  <!-- ... more antennas ... -->
+
+  <contrast min="0" max="35200"/>
+  <parameters depthSensitivity="14" maxDetectionSize="1000" minDetectionSize="100"
+              detectionSplitTargetVolume="31000" maxObservableDepth="3000"/>
+</root>
+```
+
+### Detection Parameters
+
+| Parameter | Mouse Default | Rat | EPM | Purpose |
+|-----------|--------------|-----|-----|---------|
+| `depthSensitivity` | 14 | 8 | 8 | Height threshold in mm for foreground detection |
+| `maxDetectionSize` | 1000 | 300 | 1000 | Maximum pixel count for a single-mouse detection |
+| `minDetectionSize` | 100 | 20 | 100 | Minimum pixel count; smaller = noise |
+| `detectionSplitTargetVolume` | 31000 | 1000 | 31000 | Target surface area for contact splitter per animal |
+| `maxObservableDepth` | 3000 | 3000 | 3000 | Maximum depth value in mm |
+| `contrast min/max` | 0 / 35200 | 0 / 10000 | 0 / 10600 | Depth display contrast range |
+
+### Provided Arena Configurations
+
+| Config | Description | Antennas | COM Ports | Notes |
+|--------|-------------|----------|-----------|-------|
+| **Original 50x50 (default)** | Standard mouse cage as in publication | 4×4 grid = 16 | COM30–45 | `wallsize=36`, `ray=35` |
+| **Block 50x50 with walls** | Block-style antenna layout, high walls | 16 (block layout) | COM30–45 | `wallsize=36` |
+| **Block 50x50 without walls** | Block-style antenna layout, minimal walls | 16 (block layout) | COM30–45 | `wallsize=3` |
+| **Rat floor** | 100×100 cm arena for rats | 5×5 grid = 25 | COM50–74 | `ray=25`, lower depth sensitivity |
+| **EPM** | Elevated Plus Maze | 1 (center) | COM100 | Cross-shaped floor from 2 rectangles, `wallsize=2` |
+
+### Rat Mode
+
+Rat mode uses `<ratMode/>` in the config XML and adjusts parameters for larger animals in a 100×100 cm arena. The pixel-to-cm conversion factor changes to **20/57** (vs. 10/57 for mice). Antenna detection radius is reduced to `ray=25` with 25 antennas in a 5×5 grid.
+
+---
+
+## RFID Setup
+
+### Recommended RFID Tags
+
+**Biomark APT12 PIT tag (FDX)** — 1.54× better read range than the RFID tags recommended in the original publication. Order with matching injector. Mention LMT user status (no financial agreement). Available from [biomark.com](https://www.biomark.com).
+
+### Antenna Tuning
+
+1. Launch the **AntennaTuner** plugin from the Live Mouse Tracker tab
+2. The plugin auto-detects all COM ports on plug/unplug and displays current tuning refreshed every second
+3. **Target frequency**: 134.2 kHz
+4. Use **A+/A- connectors** on the RFID reader board (not AR/A-)
+5. To increase frequency: remove coil length; cut and resolder if >10 cm removed
+6. Reading of **0.0 / 134.2 kHz** indicates a broken wire or solder joint
+7. To solder: wrap coil around wire, burn the thin translucent insulation plastic while soldering
+8. **Reading range** degrades approximately **4.2 mm per kHz deviation** from 134.2 kHz
+
+### Antenna Testing
+
+The **Antenna Tuning Tester** plugin cycles through antennas for 5 seconds each, performing 10 reads per second, and displays detected RFID numbers in the output.
+
+### Antenna COM Port Numbering
+
+Assign sequential COM port numbers (e.g., 30, 31, 32...) via Windows Device Manager → port properties → Advanced. The top-left antenna should be COM30, then 31 to its right, and so on.
+
+### RFID Implantation
+
+- Use gas anesthesia and local subcutaneous analgesia
+- Insert the RFID in the **neck** and gently push to the **side** of the animal
+- Do **NOT reuse** RFID chips — they carry factory-assigned unique numbers; reuse creates duplicate animals and corrupts multi-experiment analysis
+
+---
+
+## Multi-Setup Room Configuration
+
+More and more labs run 4 or more parallel setups in the same room. To avoid interference:
+
+**Kinect IR cross-talk**: Kinects sending direct IR to other setups cause image flickering. Solutions:
+- Attach a matte box (homemade is fine) to the front of each Kinect
+- Use isolating boxes per setup
+
+**RFID jamming**: LMT ensures only one antenna is active per system. With multiple systems:
+- Keep a **minimum 1 meter** between setups
+- **Disconnect power** from unused RFID reader hubs — their default behavior is to start reading, which jams the signal up to several meters
 
 ---
 
@@ -222,6 +388,16 @@ Long recordings are automatically split into 50-second chunks for processing.
 
 `AviSoftEventReceiver` listens on UDP port 8550 for trigger events from Avisoft-RECORDER software. When a USV recording starts and stops, LMT records the frame boundaries and WAV filename as an event in the SQLite database.
 
+### USV Analysis Tools
+
+- **Online test tool**: [usv.pasteur.cloud](https://usv.pasteur.cloud) — test USV detection on your own WAV files without any installation. Watch examples, listen to them, and process short samples to evaluate detection quality.
+- **LMT USV Toolbox**: [GitHub](https://github.com/fdechaumont/LMT-USV-Toolbox) — Python package for offline batch USV analysis. Features:
+  - Synchronization pipeline: `LMT.USV.importer` module imports and synchronizes WAV files with LMT tracking data
+  - WAV files must be at **300 kHz** sampling rate (converter script `LMT.USV.convert.convertTo300kHz.py` included)
+  - Requires `librosa` (`pip install librosa`)
+  - Figure generation scripts for Frontiers article
+- **Standalone desktop app**: available from [livemousetracker.org](https://livemousetracker.org/) for mass processing of thousands of vocalizations
+
 ---
 
 ## Behavioral Event Detection
@@ -282,6 +458,21 @@ LMT computes **35 behavioral events** in real-time, organized into five categori
 ### Live Streaming
 
 A TCP socket server (`LiveAnalysisServer`, port 7101) streams tracking data to external clients in real-time using XML serialization (JAXB), enabling integration with external analysis tools. The system also provides a UDP network stream for low-latency third-party device integration (e.g., Arduino-based closed-loop systems, optogenetics triggers).
+
+---
+
+## External Event Integration
+
+LMT can record events from external devices or programs via a simple UDP protocol on **localhost:8550** (the same port used for Avisoft USV triggers). To create a custom event:
+
+```
+PacketSender.exe -ua localhost 8550 "start_MyEventName"
+PacketSender.exe -ua localhost 8550 "end_MyEventName"
+```
+
+The event appears in the **EVENT** table of the SQLite database with the specified name, start/end frames, and associated animals. Query it with any SQLite tool (e.g., [DB Browser for SQLite](https://sqlitebrowser.org/)).
+
+You can also send UDP messages programmatically or use [PacketSender](https://packetsender.com/) for testing. LMT also supports TTL communication via Arduino for hardware-level synchronization.
 
 ---
 
@@ -372,6 +563,55 @@ The `PostProcessDataBase` ICY plugin batch-processes one or more `.sqlite` datab
 
 ---
 
+## Historical Context and Related Systems
+
+LMT emerged in 2018 as a next-generation home-cage monitoring (HCM) system, combining depth sensing with RFID for the first time. It builds on a lineage of HCM systems:
+
+### Earlier Landmark Systems
+
+| System | Year | Key Innovation | Reference |
+|--------|------|----------------|-----------|
+| **IntelliCage** | 2003 | Operant conditioning corners, RFID-tagged, up to 16 mice, cognitive testing | Lipp & Wolfer, *Front Behav Neurosci* 2022 |
+| **Eco-HAB** | 2016 | Open-source, multi-compartment social behavior, ethological design for autism research | Puścian et al., *eLife* 2016 |
+| **Social Box** | 2013/2019 | Overhead video + color markers, social hierarchy mapping, network analysis | Shemesh et al., *eLife* 2013 |
+
+### LMT's Innovation
+
+LMT uniquely combined an overhead **depth-sensing camera** with **RFID readers** for sensor-fusion tracking. The depth sensor enables:
+- 3D segmentation in the dark (infrared, day/night)
+- Separation of overlapping animals via Z-priority flood fill
+- Vertical movement detection (rearing on hind legs)
+- Nose/tail orientation from 3D body shape
+
+RFID provides **ground-truth identity** to correct visual tracking errors — complementary to the AI-based approaches that followed.
+
+### AI and Computer Vision Evolution
+
+Around the same time LMT was developed, deep learning revolutionized pose estimation:
+
+| Tool | Year | Capability | Reference |
+|------|------|-----------|-----------|
+| **DeepLabCut** | 2018 | Markerless pose estimation from video | Mathis et al., *Nat Neurosci* 2018 |
+| **MoSeq** | 2015 | Unsupervised behavioral syllable discovery from 3D video | Wiltschko et al., *Neuron* 2015 |
+| **SLEAP** | 2020 | Multi-animal pose tracking | Pereira et al., *Nat Methods* 2022 |
+
+LMT's depth+RFID approach remains complementary: RFID provides ground-truth identity that can correct AI mis-identifications, and LMT's behavioral event taxonomy provides a validated ethogram that purely vision-based systems don't natively produce.
+
+### Recent HCM Systems
+
+| System | Approach | Key Feature |
+|--------|----------|-------------|
+| **DOME** (Olden Labs) | Near-IR camera + mic | 15 health/behavior metrics, no RFID, 24/7 real-time alerts |
+| **MouseVUER** | Intel RealSense depth camera | Open-source hardware, 3D-printable parts, pairs with DeepLabCut/SLEAP |
+| **JAX Envision** | HD IR camera per cage | AI-based, 60+ variables including biological age |
+| **Smart-Kage** | In-cage cognitive testing | Automated T-maze, NOR scoring, no human intervention |
+
+### COST TEATIME Initiative
+
+The [COST TEATIME](https://www.cost-teatime.org/) initiative curates an exhaustive list of HCM systems and fosters community standards for FAIR behavioral data.
+
+---
+
 ## User Interface
 
 The main GUI panel (`LiveMouseTrackerPanel`) provides 5 tabs:
@@ -454,6 +694,8 @@ mvn clean install
 
 This produces `icy/build/icy.jar` and dependencies. The kernel is **not required to build from source** if you already have Icy installed.
 
+A local copy of the ICY kernel source matching the bundled version (**1.9.10.0**, November 2018) is at `resources/icy/` in this repository. It is an Eclipse project named `Icy-Kernel` with dependencies referenced from `/Icy-App/lib/`. The kernel consists of ~305 Java files across 29 packages totaling ~123,000 lines. Key classes include `Sequence` (7,192 lines), `ROI` (3,456), `BooleanMask2D` (2,976), `IcyBufferedImage` (4,029), `Overlay` (990), and `IcyCanvas` (4,698).
+
 ---
 
 ## Source Layout
@@ -465,6 +707,7 @@ LiveMouseTracker/
 │   │   ├── plugins/fab/
 │   │   │   ├── livemousetracker/           # Main plugin (~306 Java files)
 │   │   │   │   ├── LiveMouseTracker.java   # Central hub class (~5500 lines)
+│   │   │   │   ├── LMTLauncher.java        # Bootstrap plugin (launch validation)
 │   │   │   │   ├── detection/              # MouseDetector, MouseDetection
 │   │   │   │   ├── splitter/               # DetectionSplitter (Z-priority flood fill)
 │   │   │   │   ├── track/                  # TrackSegment, TrackContainer, TrackExtender, pools
@@ -482,16 +725,34 @@ LiveMouseTracker/
 │   │   │   │   └── ...
 │   │   │   ├── kinectdriver/               # Kinect v2 hardware driver
 │   │   │   └── aaa/voc/                    # USV analysis pipeline (~55 files)
-│   │   └── jssc/                           # Bundled Java Simple Serial Connector
+│   │   └── jssc/                           # Bundled Java Simple Serial Connector source
 │   ├── lib/win64/                          # Windows native DLLs
 │   ├── bin/                                # Eclipse output
 │   └── *.jar                               # Vendored dependencies (~30 JARs)
+│
+├── resources/
+│   ├── icy/                                # ICY kernel source (v1.9.10.0, Eclipse project)
+│   ├── Live Mouse Tracker - version December 2025 - build 1266/  # Binary distribution
+│   └── ...                                 # Analysis tool sources (lmt-analysis, etc.)
 │
 ├── .classpath                              # Eclipse classpath (references all vendored JARs)
 ├── .project                                # Eclipse project ("LMT 2022")
 ├── LICENSE                                 # GPL v3
 └── README.md
 ```
+
+---
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| **System is missing frames** | Antivirus may freeze the application to take memory snapshots. **Use Windows Defender** (works well). Avoid Kaspersky (kills performance). |
+| **RFID not detected at all** | Check USB hub power supply is connected. Use **A+/A-** connectors on RFID reader board (not AR/A-). |
+| **RFID stopped working** (was fine before) | USB hub power supply may have failed. Test with another hub. |
+| **Time drift / red flashes in recording window** | Launched via `icy.exe` instead of the `.bat` file. Use the `.bat` launcher for proper JVM memory configuration. Expect <1 s drift per 3 hours. |
+| **Tracks cut for one frame / image hangs** (Kinect issue) | (1) Enable Kinect Microphone: Control Panel → Sound → Recording → Kinect Microphone → Enable. (2) Windows privacy settings → Allow microphone access. (3) Uninstall RealTech audio drivers (consume >1 GB RAM + full CPU core). (4) Connect Kinect to a **rear USB 3.0 port** (avoid front panel). |
+| **Red antenna circles** (RFID not initializing) | Antennas not numbered correctly. Assign COM port numbers sequentially (30, 31, 32...) via Device Manager → port properties → Advanced. |
 
 ---
 
@@ -509,8 +770,11 @@ The core Python analysis library underlying most other tools. Provides programma
 - **Animal masks**: decompress and render the `DATA` blob (zlib-compressed XML) as binary silhouette masks
 - **Species support**: parameter sets for both mice and rats (`ParametersMouse` / `ParametersRat`)
 - **Novel Object Recognition**: dedicated scripts for NOR test analysis
+- **Scripts**: 50+ scripts for quality control, identity profiles, dyadic analysis, behavioral sequences, contact matrices, sensor data, CSV export, flickering filtering, RFID fix, night input (automatic, manual, sensor-based), and more
 - Install: clone from [GitHub](https://github.com/fdechaumont/lmt-analysis) and add `LMT/` directory to Python path; dependencies: numpy, scipy, matplotlib, pandas, networkx, seaborn, statsmodels
-- Tutorial: [Google Docs tutorial](https://docs.google.com/presentation/d/1wR7JM2vq5ZjugrwDe4YuuKJm0MWIvkHAvrOH7mQNOEk/edit?usp=sharing)
+- Tutorial: [Google Docs tutorial](https://docs.google.com/presentation/d/1wR7JM2vq5ZjugrwDe4YuuKJm0MWIvkHAvrOH7mQNOEk)
+- Jupyter examples: [examples/](https://github.com/fdechaumont/lmt-analysis/tree/master/LMT/examples)
+- Rebuild events: [scripts/Rebuild all events.ipynb](https://github.com/fdechaumont/lmt-analysis/tree/master/LMT/scripts)
 
 ### LMT-Easy — [GitHub](https://github.com/haribo015/LMT-Easy)
 
@@ -525,6 +789,7 @@ A desktop GUI for LMT analysis requiring no coding, built on `lmtanalysis`:
 - **Reliability reports**: detection rates, RFID match/mismatch counts, frame omissions, per-animal statistics
 - **Data export**: graph data to Excel (.xlsx), statistics to text files
 - Build standalone executable: `pyinstaller LMTAnalysisInterface.spec`
+- By Marie Bossard, Institut de l'Audition, Paris
 
 ### LMT Widget Tool — LWTools — [GitHub](https://github.com/PaulCarrascosa/LMT_Widget_Tool-LWT)
 
@@ -537,6 +802,7 @@ An interactive Jupyter-based analysis tool with statistical testing:
 - **CSV export columns**: Date, Cage, Injection, Night-Phase, Bin, start/stop frames, animal IDs/RFIDs/genotypes, totalLength, meanLength, medianLength, numberOfEvents, stdLength, CI95_low/up
 - **Filename convention**: expects `{Date}_{Experiment}_{Cage}_{Injection}.sqlite`
 - Install: `pip install LWTools` (requires Python 3.10)
+- By Damien Huzard & Paul Carrascosa, Institut de Génomique Fonctionnelle (IGF), Montpellier
 
 ### MouseKing — [GitHub](https://github.com/DaleAnnear/MouseKing)
 
@@ -563,6 +829,26 @@ A full-stack web application (Django + Nuxt.js) for browser-based analysis:
 - **Results**: interactive tables with CSV download, activity line plots per time bin
 - **Event documentation**: behavioral event descriptions served from database and displayed in the UI
 - Install: `docker compose up --build` or native (Django + Celery + RabbitMQ + npm)
+- By Nicolas Torquet, IGBMC, Strasbourg
+
+### LMT USV Toolbox — [GitHub](https://github.com/fdechaumont/LMT-USV-Toolbox)
+
+A Python package for ultrasonic vocalization analysis synchronized with LMT tracking data:
+
+- **Synchronization**: `LMT.USV.importer` module aligns WAV recordings with behavioral data
+- **Detection**: USV extraction from WAV files using librosa
+- **Conversion**: WAV files must be 300 kHz; converter script included
+- **Figure generation**: scripts for publication-quality figures (used in Frontiers article)
+- Install: `pip install librosa`; clone from GitHub
+- Also available: [usv.pasteur.cloud](https://usv.pasteur.cloud) (online test, no install) and standalone desktop app from livemousetracker.org
+
+### MiceCraft — [micecraft.org](https://micecraft.org/lmt/)
+
+An upcoming modular platform to design custom behavioral and cognitive testing arenas. Successor to LMT-Blocks. Fully compatible with LMT but not required. Not yet released.
+
+### Data Sharing
+
+[livemousetracker.org](https://livemousetracker.org/) allows registered users to post links to their SQLite databases for sharing with the community. The site also hosts validation videos and analysis scripts in R and Python.
 
 ### Shared Analysis Concepts
 
@@ -586,4 +872,6 @@ Preprint: de Chaumont, F. et al. bioRxiv (2018). [doi:10.1101/345132](https://do
 
 For the ICY platform: de Chaumont, F. et al. Icy: an open bioimage informatics platform for extended reproducible research. *Nature Methods* **9**, 690–696 (2012). [doi:10.1038/nmeth.2075](https://doi.org/10.1038/nmeth.2075)
 
-Please mention the version of LMT you used (shown in the GUI or at the top of the Output tab in Icy).
+Please mention the version of LMT you used (shown in the GUI or at the top of the Output tab in Icy). The current distributed build is **version December 2025, build 1266**.
+
+**Contact**: fabrice.de.chaumont@gmail.com, eye@igbmc.fr — or join the Discord community via [micecraft.org/lmt](https://micecraft.org/lmt)
