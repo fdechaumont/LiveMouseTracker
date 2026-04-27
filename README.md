@@ -1,6 +1,16 @@
 # Live Mouse Tracker
 
-**Real-time tracking and behavioral analysis of group-housed mice using depth sensing, RFID, and audio capture.**
+Official website: [micecraft.org/lmt](https://micecraft.org/lmt)
+
+**support:**
+
+Join our MiceCraft discord for help ! Discord (link via [micecraft.org/lmt](https://micecraft.org/lmt))
+
+Check the publication or the Official website: [micecraft.org/lmt](https://micecraft.org/lmt) to get key features.
+
+# Live Mouse Tracker documentation (AI generated):
+
+**Real-time tracking and behavioral analysis of group-housed mice using depth sensing and RFID**
 
 Live Mouse Tracker (LMT) tracks multiple mice simultaneously in a home-cage environment. It uses a Microsoft Kinect v2 depth sensor mounted above the cage to detect and segment individual animals in 3D, identifies them via RFID tags and machine learning, and records their behavior for later analysis.
 
@@ -64,7 +74,7 @@ LMT mounts a Kinect v2 depth sensor above a home cage containing up to 4 mice. E
 | Hardware | Interface | Purpose |
 |----------|-----------|---------|
 | **Microsoft Kinect v2** | USB 3.0 | Depth (512x424 px, 16-bit) + Active IR (512x424 px) at 30 fps. Requires 64-bit Windows and `ufdw_j4k2_64bit.dll` native library. |
-| **RFID Antennas** (uRFID_USB) | Serial (COM port, 9600 baud) | Subcutaneous RFID tag reads for animal identification. Multiple antennas positioned around/below the cage. Only one antenna active at a time (round-robin scheduling). |
+| **RFID Antennas** | Serial (COM port, 9600 baud) | Subcutaneous RFID tag reads for animal identification. Multiple antennas positioned around/below the cage. |
 
 **optionnal:**:
 
@@ -113,7 +123,7 @@ The hardware is assembled from off-the-shelf parts. An IKEA-style PDF with a com
 1. Launch the `LiveMouseTrackerCalibration` plugin from the Live Mouse Tracker tab
 2. The view shows red, orange, and green dots — **all green means calibrated**
 3. Maximize the frame and zoom in/out with the mouse wheel
-4. Camera height is approximately 63 cm, but calibrate via the software, **not with a ruler**
+4. Camera height is approximately 62 cm, but calibrate via the software, **not with a ruler**
 
 ### Tracking Initialization
 
