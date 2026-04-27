@@ -2,15 +2,15 @@
 
 **Real-time tracking and behavioral analysis of group-housed mice using depth sensing, RFID, and audio capture.**
 
-Live Mouse Tracker (LMT) is a plugin for the [Icy bioimage analysis platform](https://icy.bioimageanalysis.org/) that tracks multiple mice simultaneously in a home-cage environment. It uses a Microsoft Kinect v2 depth sensor mounted above the cage to detect and segment individual animals in 3D, identifies them via RFID tags and machine learning, and records their behavior for later analysis.
+Live Mouse Tracker (LMT) tracks multiple mice simultaneously in a home-cage environment. It uses a Microsoft Kinect v2 depth sensor mounted above the cage to detect and segment individual animals in 3D, identifies them via RFID tags and machine learning, and records their behavior for later analysis.
 
 Licensed under [GPL v3](LICENSE).
 
-Developed by Fabrice de Chaumont, Elodie Ey, Nicolas Torquet, Thibault Lagache, Stephane Dallongeville, Albane Imbert, Thierry Legou, Anne-Marie Le Sourd, Philippe Faure, Thomas Bourgeron, and Jean-Christophe Olivo-Marin at the [Biological Image Analysis unit](https://research.pasteur.fr/en/team/bioimage-analysis/), Institut Pasteur.
+Developed by Fabrice de Chaumont & Elodie Ey
 
 **Publication**: de Chaumont, F. et al. "Live Mouse Tracker: real-time behavioral analysis of groups of mice." *Nature Biomedical Engineering* (2019). [doi:10.1038/s41551-019-0396-1](https://doi.org/10.1038/s41551-019-0396-1). Preprint: [bioRxiv 345132](https://doi.org/10.1101/345132).
 
-**Data portal**: [livemousetracker.org](https://livemousetracker.org/) — shared datasets, videos, and analysis scripts (R and Python).
+**Data portal**: [micecraft.org/lmt](https://micecraft.org/lmt) — shared datasets, videos, and analysis scripts (R and Python).
 
 ---
 
@@ -52,12 +52,10 @@ LMT mounts a Kinect v2 depth sensor above a home cage containing up to 4 mice. E
 1. Captures synchronized **depth** and **infrared** images from the Kinect
 2. Subtracts a learned **background height map** of the empty cage to detect objects above the floor
 3. Segments individual mice from merged blobs when animals are in contact, using a **Z-priority flood fill** that exploits 3D depth data
-4. Extends temporal **tracks** by associating detections across frames using nearest-neighbor matching
+4. Extends temporal **tracks** by associating detections across frames
 5. Resolves **animal identity** through RFID tag reads (ground truth) and machine learning classification (appearance-based, using infrared/depth histograms)
 6. Extracts **behavioral features** per frame: head/tail position, rearing, speed, posture, and social interactions between animals
 7. Records everything to **SQLite** databases and **MP4 video** for offline analysis
-
-The system runs indefinitely in **streaming mode**, periodically flushing old data from memory to disk.
 
 ---
 
@@ -67,15 +65,14 @@ The system runs indefinitely in **streaming mode**, periodically flushing old da
 |----------|-----------|---------|
 | **Microsoft Kinect v2** | USB 3.0 | Depth (512x424 px, 16-bit) + Active IR (512x424 px) at 30 fps. Requires 64-bit Windows and `ufdw_j4k2_64bit.dll` native library. |
 | **RFID Antennas** (uRFID_USB) | Serial (COM port, 9600 baud) | Subcutaneous RFID tag reads for animal identification. Multiple antennas positioned around/below the cage. Only one antenna active at a time (round-robin scheduling). |
+
+**optionnal:**:
+
 | **Avisoft-RECORDER** | UDP (localhost:8550) | Ultrasonic vocalization (USV) recording synchronization. Sends start/end triggers with WAV filenames. |
 | **Arduino** | Serial (1M baud) | TTL synchronization pulses for external equipment: experiment start/stop, per-frame sync, and behavioral event triggers. |
 | **Environmental sensors** | (via Arduino/SensorMonitor) | Temperature, humidity, sound level, visible and IR light — logged per frame. |
 
-**Operating system**: Windows 64-bit (required by Kinect native DLLs). Kinect SDK 2.0 requires Windows 10, 8.1, or 8 (64-bit); SDK 1.8 for Windows 7 or 32-bit OS.
-
-**Recommended PC**: AMD Ryzen 7 2700X, 16 GB RAM. No GPU required — LMT is CPU-only. Microsoft recommends a dual-core processor, 4 GB RAM, a USB 3.0 port, and a DirectX 11 compatible graphics card for the Kinect.
-
-**Total system cost**: ~2 000 €, including the computer, RFID antenna/readers, Kinect v2 + adapter, cage, and tubes. This is a DIY system; assembly instructions are available (see Getting Started below).
+**Operating system**: Windows 64-bit (required by Kinect native DLLs).
 
 **Kinect verification**: after installing the Kinect SDK, launch the Kinect Configuration Verifier tool and confirm a stable 30 fps output. Any non-constant or lower value corrupts tracking data.
 
@@ -120,7 +117,7 @@ The hardware is assembled from off-the-shelf parts. An IKEA-style PDF with a com
 
 ### Tracking Initialization
 
-After launching the main `Live Mouse Tracker` plugin and selecting experiment parameters, the system initializes tracking within approximately **20 seconds** of observation. Green antenna circles indicate successful RFID initialization.
+After launching the main `Live Mouse Tracker` plugin and selecting experiment parameters, the system initializes tracking within approximately **10 seconds** of observation. Green antenna circles indicate successful RFID initialization.
 
 ### Additional Resources
 
@@ -190,7 +187,7 @@ Rat mode uses `<ratMode/>` in the config XML and adjusts parameters for larger a
 
 ### Recommended RFID Tags
 
-**Biomark APT12 PIT tag (FDX)** — 1.54× better read range than the RFID tags recommended in the original publication. Order with matching injector. Mention LMT user status (no financial agreement). Available from [biomark.com](https://www.biomark.com).
+**Biomark APT12 PIT tag (FDX)** — Available from [biomark.com](https://www.biomark.com).
 
 ### Antenna Tuning
 
@@ -215,7 +212,7 @@ Assign sequential COM port numbers (e.g., 30, 31, 32...) via Windows Device Mana
 
 - Use gas anesthesia and local subcutaneous analgesia
 - Insert the RFID in the **neck** and gently push to the **side** of the animal
-- Do **NOT reuse** RFID chips — they carry factory-assigned unique numbers; reuse creates duplicate animals and corrupts multi-experiment analysis
+- We recommend **to avoid reuse** RFID chips — they carry factory-assigned unique numbers; reuse creates duplicate animals and corrupts multi-experiment analysis. Still if you have completly independent experiments sets this is possible.
 
 ---
 
@@ -346,10 +343,6 @@ When RFID hasn't resolved an anonymous track, `MultiIdentityAgentManager` launch
 6. Commit the assignment only if confidence exceeds a configurable threshold
 
 Classifiers are **cached** per animal subset and evicted after 2 minutes to avoid re-training every frame.
-
-#### Diadic Black & White Mode
-
-For 2-animal experiments with contrasting coat colors and no RFID, the system compares mean infrared intensity of the two tracks — darker fur reflects less IR.
 
 ---
 
@@ -563,55 +556,6 @@ The `PostProcessDataBase` ICY plugin batch-processes one or more `.sqlite` datab
 
 ---
 
-## Historical Context and Related Systems
-
-LMT emerged in 2018 as a next-generation home-cage monitoring (HCM) system, combining depth sensing with RFID for the first time. It builds on a lineage of HCM systems:
-
-### Earlier Landmark Systems
-
-| System | Year | Key Innovation | Reference |
-|--------|------|----------------|-----------|
-| **IntelliCage** | 2003 | Operant conditioning corners, RFID-tagged, up to 16 mice, cognitive testing | Lipp & Wolfer, *Front Behav Neurosci* 2022 |
-| **Eco-HAB** | 2016 | Open-source, multi-compartment social behavior, ethological design for autism research | Puścian et al., *eLife* 2016 |
-| **Social Box** | 2013/2019 | Overhead video + color markers, social hierarchy mapping, network analysis | Shemesh et al., *eLife* 2013 |
-
-### LMT's Innovation
-
-LMT uniquely combined an overhead **depth-sensing camera** with **RFID readers** for sensor-fusion tracking. The depth sensor enables:
-- 3D segmentation in the dark (infrared, day/night)
-- Separation of overlapping animals via Z-priority flood fill
-- Vertical movement detection (rearing on hind legs)
-- Nose/tail orientation from 3D body shape
-
-RFID provides **ground-truth identity** to correct visual tracking errors — complementary to the AI-based approaches that followed.
-
-### AI and Computer Vision Evolution
-
-Around the same time LMT was developed, deep learning revolutionized pose estimation:
-
-| Tool | Year | Capability | Reference |
-|------|------|-----------|-----------|
-| **DeepLabCut** | 2018 | Markerless pose estimation from video | Mathis et al., *Nat Neurosci* 2018 |
-| **MoSeq** | 2015 | Unsupervised behavioral syllable discovery from 3D video | Wiltschko et al., *Neuron* 2015 |
-| **SLEAP** | 2020 | Multi-animal pose tracking | Pereira et al., *Nat Methods* 2022 |
-
-LMT's depth+RFID approach remains complementary: RFID provides ground-truth identity that can correct AI mis-identifications, and LMT's behavioral event taxonomy provides a validated ethogram that purely vision-based systems don't natively produce.
-
-### Recent HCM Systems
-
-| System | Approach | Key Feature |
-|--------|----------|-------------|
-| **DOME** (Olden Labs) | Near-IR camera + mic | 15 health/behavior metrics, no RFID, 24/7 real-time alerts |
-| **MouseVUER** | Intel RealSense depth camera | Open-source hardware, 3D-printable parts, pairs with DeepLabCut/SLEAP |
-| **JAX Envision** | HD IR camera per cage | AI-based, 60+ variables including biological age |
-| **Smart-Kage** | In-cage cognitive testing | Automated T-maze, NOR scoring, no human intervention |
-
-### COST TEATIME Initiative
-
-The [COST TEATIME](https://www.cost-teatime.org/) initiative curates an exhaustive list of HCM systems and fosters community standards for FAIR behavioral data.
-
----
-
 ## User Interface
 
 The main GUI panel (`LiveMouseTrackerPanel`) provides 5 tabs:
@@ -660,41 +604,6 @@ The overlay renders:
 - ML learning status and head classifier instance count
 - Z-spine depth profile per animal
 - Environmental sensor readings (temperature, humidity, sound, light)
-
----
-
-## Building and Installation
-
-### Prerequisites
-- **Eclipse IDE** (the project has no Maven/Gradle/Ant build)
-- **Java 1.8** (source and target compliance)
-- **Icy** (installed and configured as an Eclipse project or available as JARs)
-
-### Build
-
-1. Import the project into Eclipse: the Eclipse project name is `LMT 2022`
-2. Ensure the Icy kernel is on the classpath (the `.classpath` references ICY libraries)
-3. Build automatically via Eclipse, or use the JAR export descriptor at `LiveMouseTracker/export.jardesc`
-
-### Deploy
-
-1. Export the plugin as a JAR (via Eclipse export or `export.jardesc`)
-2. Place the JAR in Icy's `plugins/` directory
-3. Launch Icy — the plugin is auto-discovered by scanning classes in the `plugins.*` package that extend `PluginActionable`
-
-### ICY Kernel
-
-The Icy kernel source is available at [gitlab.pasteur.fr/bia/icy/icy](https://gitlab.pasteur.fr/bia/icy/icy) and can be built independently with Maven:
-
-```bash
-git clone https://gitlab.pasteur.fr/bia/icy/icy.git
-cd icy
-mvn clean install
-```
-
-This produces `icy/build/icy.jar` and dependencies. The kernel is **not required to build from source** if you already have Icy installed.
-
-A local copy of the ICY kernel source matching the bundled version (**1.9.10.0**, November 2018) is at `resources/icy/` in this repository. It is an Eclipse project named `Icy-Kernel` with dependencies referenced from `/Icy-App/lib/`. The kernel consists of ~305 Java files across 29 packages totaling ~123,000 lines. Key classes include `Sequence` (7,192 lines), `ROI` (3,456), `BooleanMask2D` (2,976), `IcyBufferedImage` (4,029), `Overlay` (990), and `IcyCanvas` (4,698).
 
 ---
 
@@ -844,7 +753,7 @@ A Python package for ultrasonic vocalization analysis synchronized with LMT trac
 
 ### MiceCraft — [micecraft.org](https://micecraft.org/lmt/)
 
-An upcoming modular platform to design custom behavioral and cognitive testing arenas. Successor to LMT-Blocks. Fully compatible with LMT but not required. Not yet released.
+An upcoming modular platform to design custom behavioral and cognitive testing arenas. Successor to LMT-Blocks. Fully compatible with LMT but not required.
 
 ### Data Sharing
 
@@ -861,17 +770,5 @@ All tools share these conventions inherited from the LMT data format:
 - **Night detection**: dark phase typically 20:00–08:00, shown as gray shading on plots; configurable per tool
 
 ---
-
-## Citation
-
-If you use Live Mouse Tracker in your research, please cite:
-
-de Chaumont, F., Ey, E., Torquet, N., Lagache, T., Dallongeville, S., Imbert, A., Legou, T., Le Sourd, A.-M., Faure, P., Bourgeron, T. & Olivo-Marin, J.-C. Live Mouse Tracker: real-time behavioral analysis of groups of mice. *Nature Biomedical Engineering* (2019). [doi:10.1038/s41551-019-0396-1](https://doi.org/10.1038/s41551-019-0396-1)
-
-Preprint: de Chaumont, F. et al. bioRxiv (2018). [doi:10.1101/345132](https://doi.org/10.1101/345132)
-
-For the ICY platform: de Chaumont, F. et al. Icy: an open bioimage informatics platform for extended reproducible research. *Nature Methods* **9**, 690–696 (2012). [doi:10.1038/nmeth.2075](https://doi.org/10.1038/nmeth.2075)
-
-Please mention the version of LMT you used (shown in the GUI or at the top of the Output tab in Icy). The current distributed build is **version December 2025, build 1266**.
 
 **Contact**: fabrice.de.chaumont@gmail.com, eye@igbmc.fr — or join the Discord community via [micecraft.org/lmt](https://micecraft.org/lmt)
