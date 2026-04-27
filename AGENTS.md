@@ -2,11 +2,9 @@
 
 ## Project overview
 
-LiveMouseTracker (LMT) is a Java plugin for the [ICY bioimage analysis platform](https://icy.bioimageanalysis.org/) that tracks live mice using Kinect depth-sensing hardware, RFID antennas, and audio (USV) capture. Licensed GPL v3.
+LiveMouseTracker (LMT) tracks live mice using Kinect depth-sensing hardware, RFID antennas, and audio (USV) capture. Licensed GPL v3.
 
 Published as: de Chaumont, F. et al. "Live Mouse Tracker: real-time behavioral analysis of groups of mice." *Nature Biomedical Engineering* (2019). doi: [10.1038/s41551-019-0396-1](https://doi.org/10.1038/s41551-019-0396-1). Preprint: [bioRxiv 345132](https://doi.org/10.1101/345132). Data portal: [livemousetracker.org](https://livemousetracker.org/).
-
-The ICY kernel source is available at [gitlab.pasteur.fr/bia/icy/icy](https://gitlab.pasteur.fr/bia/icy/icy) — upstream is a Maven project (`org.bioimageanalysis.icy:icy-kernel:2.5.4`), Java 1.8. A local copy matching the bundled version (**1.9.10.0**, November 2018) is at `resources/icy/` — an Eclipse project named `Icy-Kernel` with no Maven build files.
 
 ## Build & run
 
