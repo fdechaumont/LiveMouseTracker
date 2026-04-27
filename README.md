@@ -781,4 +781,30 @@ All tools share these conventions inherited from the LMT data format:
 
 ---
 
+## Building and Installation
+
+### Prerequisites
+- **Eclipse IDE** (the project has no Maven/Gradle/Ant build)
+- **Java 1.8** (source and target compliance)
+- **Icy** (installed and configured as an Eclipse project or available as JARs in the live mouse tracker distribution)
+
+### do not update Icy
+
+The last version introduces streaming issues with images. So keep using the old version that is distributed in live mouse tracker
+
+### Build (via eclipse)
+
+1. Import the project into Eclipse
+2. Import the Icy App folder as a secondary project in Eclipse (you can get it from the live mouse tracker zip)
+3. Ensure the Icy kernel is on the classpath. (reference icy.jar in the classpath)
+4. Run the app with eclipse
+
+### Deploy
+
+1. Export the folder livemousetracker as a JAR
+2. Replace the jar file in the plugin section of your distribution (not the one within eclipse, another one for realease on your disk)
+3. Launch the livemousetracker.bat file
+
+---
+
 **Contact**: fabrice.de.chaumont@gmail.com, eye@igbmc.fr — or join the Discord community via [micecraft.org/lmt](https://micecraft.org/lmt)
