@@ -18,6 +18,10 @@ Published as: de Chaumont, F. et al. "Live Mouse Tracker: real-time behavioral a
 - **Launch mechanism**: the `.bat` file copies native DLLs (`jssc.dll`, `ufdw_j4k2_64bit.dll`) to `lib/win64/`, then launches ICY with JVM params tuned for real-time: 6 GB heap (`-Xmx6G`), CMS garbage collector, DirectDraw disabled (`-Dsun.java2d.noddraw=true`). Entry point: `-x plugins.fab.livemousetracker.LMTLauncher`.
 - **LMTLauncher**: a trivial bootstrap plugin (16 lines) that sets `launchOK = true`. `LiveMouseTracker` checks this flag at line 651 to validate the system was launched correctly via the bat file.
 - **Bundled ICY version**: 1.9.10.0 with ~70 platform libraries. Key bundled dependencies: `sqlite-jdbc-3.8.11.2`, `weka.jar`, `jSerialComm-2.3.0`, `KinectDriver v007`, `ufdw.jar`.
+- **Do not update Icy**: the last Icy version introduces streaming issues with images. Keep using the bundled version distributed with LMT.
+- **Build via Eclipse**: (1) Import the LMT project into Eclipse. (2) Import the Icy App folder as a secondary Eclipse project (available from the LMT zip). (3) Ensure the Icy kernel is on the classpath (reference `icy.jar`). (4) Run from Eclipse.
+- **Deploy**: (1) Export the `livemousetracker` folder as a JAR. (2) Replace the JAR in the `plugins/` directory of the distribution (not the Eclipse project). (3) Launch via the `.bat` file.
+- **Optional hardware interfaces**: Arduino (serial, 1M baud) for TTL sync pulses and external event triggers; Avisoft-RECORDER (UDP localhost:8550) for USV recording synchronization; environmental sensors (temperature, humidity, sound, light) via Arduino/SensorMonitor, logged per frame in the FRAME table.
 
 ## Source layout
 
@@ -69,6 +73,17 @@ The main LMT class extends `PluginActionable` (which extends `Plugin` and implem
 - `BooleanMask2D` boolean operations (union/intersection/subtraction) are the foundation of the mouse detection and segmentation algorithm.
 - Packages follow ICY's plugin convention: `plugins.fab.<pluginname>`.
 
+### Tracking pipeline
+
+Per-frame processing has 6 stages:
+
+1. **Background model** (`BackgroundHeightMapBuilder`): per-pixel maximum depth map converges to empty cage floor. Small spurious detections feed back into the background to patch ghost pixels.
+2. **Foreground detection** (`MouseDetector`): subtract background from current frame, threshold by `depthSensitivity`, extract connected components via `BooleanMask2D.getComponents()`, filter by size. Each `MouseDetection` captures shape (ROI2DArea mask, ellipse axes), 3D position (mass center, front/back), appearance (IR/depth histograms), anatomy (ear/nose), and behavior (rearing, looking up/down).
+3. **Contact splitting** (`DetectionSplitter3Optimized` / `DetectionSplitter3Core`): when merged blobs match 2+ previous tracks, Z-priority flood fill separates animals. Seeds come from each animal's spine points; regions expand from tallest Z downward with target surface area constraints.
+4. **Track extension** (`TrackExtender`): nearest-neighbor matching of mass centers across frames. Tracks live in two pools managed by `TrackContainer` — `AnonymousPool` (unassigned) and `AnimalPool` (RFID/ML-identified).
+5. **Detection post-processing** (`MouseDetection.postProcess()`): speed computation, head/tail resolution (speed-based → ML AdaBoosted RandomForest → axis continuity fallback), spine Z-profile, behavioral states.
+6. **Identity resolution**: RFID ground truth via `RFIDManager2` (priority-scheduled antenna activation) + `RFIDSolver2` (track splitting on mismatches). ML identity via `MultiIdentityAgentManager` with cached AdaBoostM1+RandomForest classifiers (Weka) when RFID is unavailable.
+
 ### Arena configuration (lmt-config.xml)
 
 The XML config file placed in the ICY folder defines arena geometry, antenna positions, and detection parameters. To switch configs, rename the desired file to `lmt-config.xml`.
@@ -76,8 +91,8 @@ The XML config file placed in the ICY folder defines arena geometry, antenna pos
 ```xml
 <root>
   <cagefloor>
-    <polygon wallsize="36">
-      <point x="114" y="63"></point>  <!-- rectangle defining cage floor in Kinect pixels -->
+    <polygon wallsize="36">  <!-- wall thickness in pixels; use 2-3 for wall-less arenas -->
+      <point x="114" y="63"></point>
     </polygon>
   </cagefloor>
   <antenna x="131.5" y="80.5" ray="35" com="COM30"></antenna>
@@ -87,7 +102,18 @@ The XML config file placed in the ICY folder defines arena geometry, antenna pos
 </root>
 ```
 
-Provided configs: mouse 50x50 (default, 4x4=16 antennas COM30-45), block 50x50 with/without walls, rat floor (5x5=25 antennas COM50-74, depthSensitivity=8), EPM (cross-shaped floor, single antenna COM100). Rat mode enables `<ratMode/>` with scaleFactor 20/57.
+### Detection parameters by arena type
+
+| Parameter | Mouse Default | Rat | EPM | Purpose |
+|---|---|---|---|---|
+| `depthSensitivity` | 14 | 8 | 8 | Height threshold (mm) for foreground detection |
+| `maxDetectionSize` | 1000 | 300 | 1000 | Max pixel count for a single-mouse detection |
+| `minDetectionSize` | 100 | 20 | 100 | Min pixel count; smaller = noise |
+| `detectionSplitTargetVolume` | 31000 | 1000 | 31000 | Target surface area for contact splitter per animal |
+| `maxObservableDepth` | 3000 | 3000 | 3000 | Maximum depth value (mm) |
+| `contrast min/max` | 0 / 35200 | 0 / 10000 | 0 / 10600 | Depth display contrast range |
+
+Provided configs: mouse 50x50 (default, 4x4=16 antennas COM30-45), block 50x50 with/without walls (16 antennas, block layout, COM30-45; `wallsize=3` for wall-less), rat floor (5x5=25 antennas COM50-74), EPM (cross-shaped floor from 2 rectangles, single antenna COM100, `wallsize=2`). Rat mode enables `<ratMode/>` with scaleFactor 20/57.
 
 ### RFID hardware
 
@@ -107,10 +133,20 @@ The `.sqlite` file is the data contract between LMT and all downstream analysis 
 
 - **ANIMAL**: `ID`, `RFID`, `NAME`, `GENOTYPE` (base 4 columns). Analysis tools may `ALTER TABLE` to add `AGE`, `SEX`, `STRAIN`, `SETUP`, `TREATMENT`. Schema is variable (3–9 columns); all tools handle this adaptively.
 - **DETECTION**: `FRAMENUMBER`, `ANIMALID` (nullable for anonymous), `MASS_X/Y/Z`, `FRONT_X/Y/Z`, `BACK_X/Y/Z`, `REARING`, `LOOK_UP`, `LOOK_DOWN`, `DATA` (zlib-compressed XML mask blob).
-- **EVENT**: `NAME` (string event type), `STARTFRAME`, `ENDFRAME`, `IDANIMALA/B/C/D` (up to 4 animals, nullable), `METADATA` (JSON, added dynamically if missing).
+- **EVENT**: `ID`, `NAME` (string event type), `DESCRIPTION`, `STARTFRAME`, `ENDFRAME`, `IDANIMALA/B/C/D` (up to 4 animals, nullable), `METADATA` (JSON, added dynamically if missing). Single-animal events use only `IDANIMALA`; pair events use A+B; group events use A+B+C or A+B+C+D.
 - **FRAME**: `FRAMENUMBER`, `TIMESTAMP` (epoch ms), `NUMPARTICLE`, `PAUSED`, `TEMPERATURE`, `HUMIDITY`, `SOUND`, `LIGHTVISIBLE`, `LIGHTVISIBLEANDIR`.
-- **RFIDEVENT**: `RFID`, `TIME`, `X`, `Y`.
+- **RFIDEVENT**: `ID`, `RFID`, `TIME`, antenna position `X`, `Y`.
 - **LOG**: `version`, `process`, `date`, `tmin`, `tmax`.
+
+### Database indexes
+
+Created by all analysis tools via `BuildDataBaseIndex.py`:
+
+- `detectionIndex` on `DETECTION(ID, FRAMENUMBER)`
+- `detectionFastLoadXYIndex` on `DETECTION(ANIMALID, FRAMENUMBER, MASS_X, MASS_Y)`
+- `eventIndex` on `EVENT(ID, STARTFRAME, ENDFRAME)`
+- `eventStartFrameIndex` on `EVENT(STARTFRAME)`
+- `eventEndFrameIndex` on `EVENT(ENDFRAME)`
 
 ### Measurement constants (shared across all analysis tools)
 
@@ -121,10 +157,16 @@ The `.sqlite` file is the data contract between LMT and all downstream analysis 
 - Speed low: **5 cm/s** (stop/move boundary); speed high: **10 cm/s** (fast movement)
 - Body slope for rearing: **40** (frontZ − backZ)
 - Follow corridor: width `2.5/scaleFactor`, length `24/scaleFactor`, max angle π/4, speed ratio ≥ 2×
+- Center margin: **7.32 cm** (center zone boundary, chosen for equal center/periphery area)
+- Vibrissae: **3 cm** (nose-proximity thresholds)
 
 ### Event rebuilding convention
 
 Analysis tools do **not** use the Java tracker's live-computed events. They rebuild all behavioral events from raw `DETECTION` data, processing in **1-day windows** (to handle multi-day recordings). The `BuildEvent*` module pattern (each module exports `reBuildEvent(connection, file, tmin, tmax, pool)` and `flush(connection)`) is the standard way to add new event types. Events are stored as named intervals in the EVENT table.
+
+### Post-processing
+
+The `PostProcessDataBase` ICY plugin batch-processes `.sqlite` databases: recomputes events from raw detection data, runs huddling detection (multi-threaded, 2-minute windows), nest detection (3+ mice), merges fragmented events split by the streaming save boundary (every 500 frames), deduplicates EVENT rows, and vacuums SQLite.
 
 ## Analysis tools ecosystem
 
@@ -137,6 +179,14 @@ These are separate open-source projects, not bundled in this repository.
 | **LWTools** | Python + Jupyter | Jupyter widgets | LMT-Index normalization, Linear Mixed Models, DABest estimation statistics, multi-night splitting, CSV export | [GitHub](https://github.com/PaulCarrascosa/LMT_Widget_Tool-LWT) |
 | **MouseKing** | Python + R + Nextflow | CLI + Docker | Reproducible pipeline: Wilcoxon univariate stats, PCA/MANOVA multivariate stats, Cohen's d effect sizes, behavioral domain taxonomy | [GitHub](https://github.com/DaleAnnear/MouseKing) |
 | **lmt_toolkit_analysis** | Python + Django + Vue.js | Web app | Browser-based: upload SQLite → quality control → edit animals → rebuild events → extract profiles; Docker Compose deployment | [GitHub](https://github.com/ntorquet/lmt_toolkit_analysis) |
+| **LMT USV Toolbox** | Python | Library + CLI | USV analysis synchronized with tracking data; `LMT.USV.importer` aligns WAV with behavioral data; requires librosa; WAV files must be 300 kHz | [GitHub](https://github.com/fdechaumont/LMT-USV-Toolbox) |
+
+### Shared analysis concepts
+
+All tools share these conventions inherited from the LMT data format:
+- **Event metrics**: three standard measures per event type per animal — TotalLen (total duration), Nb (number of occurrences), MeanDur (mean duration per event).
+- **Coordinate system**: pixel coordinates in DETECTION; converted to cm via `scaleFactor = 10/57` for a 50×50 cm arena.
+- **Night detection**: dark phase typically 20:00–08:00, shown as gray shading on plots; configurable per tool.
 
 ## Conventions
 
