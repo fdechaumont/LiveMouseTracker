@@ -350,19 +350,24 @@ public class RFIDAntenna extends Thread implements Antenna {
 
 				//		Thread.sleep( 100 ); // 15
 				
-				if ( ! lastReadOrder.startsWith("SRA" ) )
+				// 
+
+				if ( ! lastReadOrder.startsWith("SRA" ) )  // SRA = switch On. If the last order was switch on
 				{
 					switchOff();
 					switchOn();
 				}
 				
+				sendReadOrder();
 				try {
 					Thread.sleep( 100 ); // 70
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				
 				readData();
+				
+				
+				//readData();
 				
 				/*//previous version: 
 				switchOn();
@@ -414,6 +419,8 @@ public class RFIDAntenna extends Thread implements Antenna {
 
 	void readData( )
 	{
+		lastReadOrder = "RFIDREAD";
+		
 		try {
 		//	System.out.println( "1:" + serial.readString() );
 
@@ -447,7 +454,8 @@ public class RFIDAntenna extends Thread implements Antenna {
 							if ( s.length() == 12 )
 							{
 //								System.out.println("" + comPort + " / National RFID tag: " + s );
-								lastReadOrder = "RFIDREAD"; // this is to reset the lastReadOrder value SRA by RFIDOrder so that the reader gets switch off and on again
+								// this lastReadOrder was affected only if something was read.
+								// lastReadOrder = "RFIDREAD"; // this is to reset the lastReadOrder value SRA by RFIDOrder so that the reader gets switch off and on again
 								String id=s;
 								AntennaReadEvent event = new AntennaReadEvent(
 										LiveMouseTracker.getT(),

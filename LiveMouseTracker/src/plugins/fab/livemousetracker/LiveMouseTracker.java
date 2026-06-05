@@ -164,7 +164,7 @@ import weka.core.Instances;
 public class LiveMouseTracker extends PluginActionable
 implements KinectListener, ActionListener, IcyFrameListener {
 
-	String version = "december 2025";
+	// String version = "december 2025";
 	/** Warning: This depth sequence is the one from the kinect, It's not a Z-corrected version. Use LiveMouseTracker.depthImage instead */
 	public static boolean DISPLAY_DEPTH_SEQUENCE = false;
 	public static final boolean DISPLAY_DIF_INFRA_SEQUENCE = false;
@@ -670,7 +670,25 @@ implements KinectListener, ActionListener, IcyFrameListener {
 		
 		
 		
-		System.out.println("Starting Live Mouse Tracker version " + version );
+		System.out.println("Starting Live Mouse Tracker..." );
+		
+		version ="no version provided with -LMTversion";
+		for ( int i=0; i<Icy.getCommandLineArgs().length; i++ )
+		{
+			String s = Icy.getCommandLineArgs()[i];
+			if ( s.contentEquals("-LMTversion" ) )
+			{
+				try
+				{
+					version = Icy.getCommandLineArgs()[i+1];
+					break;
+				}catch( Exception e )
+				{
+					System.out.println("Can't read version from command line.");
+				}
+			}
+		}
+		
 		
 		/*
 		if ( instanceStarted )
@@ -3351,6 +3369,7 @@ implements KinectListener, ActionListener, IcyFrameListener {
 	DebugOverlay debugOverlay;
 
 	static private TrackPoolOverlay trackPoolOverlay;
+	private static String version = "version";
 
 	/** contains the list of detection of the last frame */
 	public ArrayList<MouseDetection> lastDetectionList = new ArrayList<MouseDetection>();
@@ -4370,6 +4389,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));			
 		}
 
+		this.addEventLogToDataBase( new EventLog( "LMT Version : " + LiveMouseTracker.version , null ) ) ;
+		
 	}
 
 	private void loadUserConfigFileAntenna() {
@@ -4504,9 +4525,8 @@ implements KinectListener, ActionListener, IcyFrameListener {
 			System.out.println("xml config file: Display substracted background sequence ON.");			
 			addSequence ( substractedBackgroundSequence );
 			DISPLAY_SUBSTRACTED_BACKGROUND_SEQUENCE = true;
-			
 		}
-		
+				
 		Element parametersElement = XMLUtil.getElement( xmlDocument.getDocumentElement(), "parameters" );
 		{
 			Attr depthSensitivityAttr = XMLUtil.getAttribute( parametersElement, "depthSensitivity" );
